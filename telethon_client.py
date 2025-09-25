@@ -16,7 +16,7 @@ class CustomTelethonClient:
         self.client = None
         self.api_id = USER_API_ID # Use user API ID for search
         self.api_hash = USER_API_HASH # Use user API hash for search
-        self.session_name = 'user_session' # Use an in-memory session for Telethon to avoid file locks
+        self.session_name = 'logi_peek_bot_session' # Use an in-memory session for Telethon to avoid file locks
         self.is_authorized = False
     
     async def connect(self):

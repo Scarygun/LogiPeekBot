@@ -84,7 +84,14 @@ MESSAGES = {
         "broadcast_success": "✅ Xabar muvaffaqiyatli tarqatildi!\n\nSent: {sent}\nFailed: {failed}",
         "search_result_item": "**#{i} {group_title}**\n\n📅 {date} | 👤 {sender}\n\n💬 {text}{ellipsis}\n\n🔗 [Xabarni ko'rish]({link})",
         "select_language_button": "Tilni tanlash",
-        "select_language_text": "Iltimos, tilni tanlang:"
+        "select_language_text": "Iltimos, tilni tanlang:",
+        "bot_description_title": "Bot nima qila oladi?",
+        "bot_description_line1": "🚀 Bu bot sizga yuk topishda yordam beradi!",
+        "bot_username": "@logi_peek_bot", # Example bot username, replace if actual is different
+        "bot_description_line2_8d": "🔍 Tez va oson yuk qidirish",
+        "bot_description_line3_concert": "👥 Guruhlar va kontaktlar qo'shish",
+        "bot_description_line4_slowed": "💰 Balansingizni tekshirish va to'ldirish",
+        "bot_description_line5_all_in_seconds": "👉 Barcha funksiyalar bir joyda"
     },
     "ru": {
         "welcome": "Привет! Добро пожаловать в бот для поиска грузов. Пожалуйста, выберите язык:",
@@ -157,7 +164,14 @@ MESSAGES = {
         "broadcast_success": "✅ Xabar muvaffaqiyatli tarqatildi!\n\nSent: {sent}\nFailed: {failed}",
         "search_result_item": "**#{i} {group_title}**\n\n📅 {date} | 👤 {sender}\n\n💬 {text}{ellipsis}\n\n🔗 [Xabarni ko'rish]({link})",
         "select_language_button": "Tilni tanlash",
-        "select_language_text": "Iltimos, tilni tanlang:"
+        "select_language_text": "Iltimos, tilni tanlang:",
+        "bot_description_title": "Bot nima qila oladi?",
+        "bot_description_line1": "🚀 Bu bot sizga yuk topishda yordam beradi!",
+        "bot_username": "@YukQidirishBot", # Example bot username, replace if actual is different
+        "bot_description_line2_8d": "🔍 Tez va oson yuk qidirish",
+        "bot_description_line3_concert": "👥 Guruhlar va kontaktlar qo'shish",
+        "bot_description_line4_slowed": "💰 Balansingizni tekshirish va to'ldirish",
+        "bot_description_line5_all_in_seconds": "👉 Barcha funksiyalar bir joyda"
     }
 }
 
@@ -197,7 +211,7 @@ async def set_language(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     logger.info(f"User {user_id} selected language: {lang_code}")
     
     # Til tanlangandan so'ng asosiy menyuni ko'rsatamiz
-    reply_markup = get_main_menu_keyboard(context.user_data)
+    reply_markup = get_main_menu_keyboard(context.user_data, get_message)
     await update.message.reply_text(get_message(context.user_data, "main_menu"), reply_markup=reply_markup)
     
     return ConversationHandler.END

@@ -34,8 +34,17 @@ async def start(update, context):
     reply_markup = get_main_menu_keyboard(context.user_data, get_message)
 
     await update.message.reply_text(
-        get_message(context.user_data, "welcome"),
-        reply_markup=reply_markup
+        f"{get_message(context.user_data, "bot_description_title")}\n\n"
+        f"{get_message(context.user_data, "bot_description_line1")}\n"
+        f"{get_message(context.user_data, "bot_username")} {get_message(context.user_data, "welcome").split('!')[0]}!\n"
+        f"\n"
+        f"{get_message(context.user_data, "bot_description_line2_8d")}\n"
+        f"{get_message(context.user_data, "bot_description_line3_concert")}\n"
+        f"{get_message(context.user_data, "bot_description_line4_slowed")}\n"
+        f"\n"
+        f"{get_message(context.user_data, "bot_description_line5_all_in_seconds")} - {get_message(context.user_data, "bot_username")}",
+        reply_markup=reply_markup,
+        parse_mode="HTML"
     )
 
 async def help_command(update, context):
