@@ -2,13 +2,13 @@
 import os
 
 # Adminlar ro'yxati
-ADMINS = [8093402925, 5266500862, 6475387133]
+ADMINS = [8093402925, 5266500862, 6475387133, 1039880863]
 
 # Ma'lumotlar bazasi nomi
 DATABASE_NAME = 'bot_data.db'
 
 # Bot tokeni (to‘g‘ridan-to‘g‘ri yozilgan)
-BOT_TOKEN = '8321048668:AAHVU1ITY_uatfMuHZ9cubuHtboufiTAj_k'
+BOT_TOKEN = '7734947131:AAGL8wKpmHDY6tHFjZ9zOAI-T_3yCRoQmPI'
 
 # Foydalanuvchi Telethon sozlamalari
 USER_API_ID = 26813019

@@ -52,9 +52,19 @@ async def cancel_add_contact(update: Update, context: ContextTypes.DEFAULT_TYPE)
 # Conversation handler yaratish
 def get_contact_conversation_handler():
     return ConversationHandler(
-        entry_points=[MessageHandler(filters.Regex(get_message({}, "add_contact")), start_add_contact)],
+        entry_points=[
+            MessageHandler(
+                filters.Regex(f"^({get_message({'language': 'uz'}, 'add_contact')}|{get_message({'language': 'ru'}, 'add_contact')})$"), 
+                start_add_contact
+            )
+        ],
         states={
             ContactStates.WAITING_CONTACT: [MessageHandler(filters.TEXT & ~filters.COMMAND, process_contact)],
         },
-        fallbacks=[MessageHandler(filters.Regex(f"^({get_message({}, 'cancel_button')}|Cancel)$"), cancel_add_contact)],
+        fallbacks=[
+            MessageHandler(
+                filters.Regex(f"^({get_message({'language': 'uz'}, 'cancel_button')}|{get_message({'language': 'ru'}, 'cancel_button')}|Cancel)$"), 
+                cancel_add_contact
+            )
+        ],
     )

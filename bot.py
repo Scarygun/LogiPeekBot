@@ -1,6 +1,7 @@
 import os
 import logging
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
+import telegram # Added for telegram.error.Conflict
 from search_handler import get_search_conversation_handler
 from group_handler import get_group_conversation_handler
 from contact_handler import get_contact_conversation_handler
@@ -88,6 +89,14 @@ def main():
     # Botni yaratish
     application = ApplicationBuilder().token(BOT_TOKEN).post_init(post_init).post_shutdown(post_shutdown).build()
     
+    # Error handler
+    async def error_handler(update, context):
+        logger.error(f"Error: {context.error}", exc_info=context.error)
+        if isinstance(context.error, telegram.error.Conflict):
+            logger.warning("Conflict error: Another bot instance might be running. Please ensure only one instance is active.")
+
+    application.add_error_handler(error_handler)
+    
     # Handlerlarni qo'shish
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("balance", check_balance))
@@ -104,11 +113,13 @@ def main():
     # application.add_handler(CommandHandler("language", start_language_selection))
     
     # Balans tekshirish uchun handler
-    application.add_handler(MessageHandler(filters.Regex(get_message({}, "check_balance")), check_balance))
+    balance_button_uz = get_message({'language': 'uz'}, "check_balance")
+    balance_button_ru = get_message({'language': 'ru'}, "check_balance")
+    application.add_handler(MessageHandler(filters.Regex(f"^({balance_button_uz}|{balance_button_ru})$"), check_balance))
     # application.add_handler(MessageHandler(filters.Regex(f"^({get_message({}, 'select_language_button', lang='uz')}|{get_message({}, 'select_language_button', lang='ru')})$"), start_language_selection))
     
     # Botni ishga tushirish
-    application.run_polling()
+    application.run_polling(poll_interval=5)
 
 if __name__ == '__main__':
     main()

@@ -121,10 +121,20 @@ async def cancel_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Conversation handler yaratish
 def get_search_conversation_handler():
     return ConversationHandler(
-        entry_points=[MessageHandler(filters.Regex(get_message({}, "search_load")), start_search)],
+        entry_points=[
+            MessageHandler(
+                filters.Regex(f"^({get_message({'language': 'uz'}, 'search_load')}|{get_message({'language': 'ru'}, 'search_load')})$"), 
+                start_search
+            )
+        ],
         states={
             SearchStates.WAITING_FROM: [MessageHandler(filters.TEXT & ~filters.COMMAND, process_from)],
             SearchStates.WAITING_TO: [MessageHandler(filters.TEXT & ~filters.COMMAND, process_to)],
         },
-        fallbacks=[MessageHandler(filters.Regex(f"^({get_message({}, 'cancel_button')}|Cancel)$"), cancel_search)],
+        fallbacks=[
+            MessageHandler(
+                filters.Regex(f"^({get_message({'language': 'uz'}, 'cancel_button')}|{get_message({'language': 'ru'}, 'cancel_button')}|Cancel)$"), 
+                cancel_search
+            )
+        ],
     )

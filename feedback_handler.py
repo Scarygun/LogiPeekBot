@@ -26,9 +26,20 @@ async def feedback_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 def get_feedback_conversation_handler() -> ConversationHandler:
     return ConversationHandler(
-        entry_points=[MessageHandler(filters.Regex(get_message({}, "send_feedback")), feedback_start)],
+        entry_points=[
+            MessageHandler(
+                filters.Regex(f"^({get_message({'language': 'uz'}, 'send_feedback')}|{get_message({'language': 'ru'}, 'send_feedback')})$"), 
+                feedback_start
+            )
+        ],
         states={
             FEEDBACK_TEXT: [MessageHandler(filters.TEXT & ~filters.COMMAND, feedback_received)]
         },
-        fallbacks=[MessageHandler(filters.COMMAND, feedback_cancel)]
+        fallbacks=[
+            MessageHandler(
+                filters.Regex(f"^({get_message({'language': 'uz'}, 'cancel_button')}|{get_message({'language': 'ru'}, 'cancel_button')}|Cancel)$"), 
+                feedback_cancel
+            ),
+            MessageHandler(filters.COMMAND, feedback_cancel)
+        ]
     )

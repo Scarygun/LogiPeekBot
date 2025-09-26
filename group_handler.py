@@ -56,9 +56,19 @@ async def cancel_add_group(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Conversation handler yaratish
 def get_group_conversation_handler():
     return ConversationHandler(
-        entry_points=[MessageHandler(filters.Regex(get_message({}, "add_group")), start_add_group)],
+        entry_points=[
+            MessageHandler(
+                filters.Regex(f"^({get_message({'language': 'uz'}, 'add_group')}|{get_message({'language': 'ru'}, 'add_group')})$"), 
+                start_add_group
+            )
+        ],
         states={
             GroupStates.WAITING_GROUP: [MessageHandler(filters.TEXT & ~filters.COMMAND, process_group)],
         },
-        fallbacks=[MessageHandler(filters.Regex(f"^({get_message({}, 'cancel_button')}|Cancel)$"), cancel_add_group)],
+        fallbacks=[
+            MessageHandler(
+                filters.Regex(f"^({get_message({'language': 'uz'}, 'cancel_button')}|{get_message({'language': 'ru'}, 'cancel_button')}|Cancel)$"), 
+                cancel_add_group
+            )
+        ],
     )
