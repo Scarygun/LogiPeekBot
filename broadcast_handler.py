@@ -15,34 +15,34 @@ class BroadcastStates:
     CONFIRM_BROADCAST = 2
 
 async def start_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    logger.info(f"start_broadcast called by user {update.effective_user.id}")
     if not update.effective_user or not await is_admin(update.effective_user.id):
         await update.message.reply_text(get_message(context.user_data, "admin_not_authorized"))
         return ConversationHandler.END
 
-    keyboard = [[get_message(context.user_data, "cancel_button")]]
+    keyboard = [] # Bekor qilish tugmasi olib tashlandi
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
     await update.message.reply_text(get_message(context.user_data, "broadcast_start_message"), reply_markup=reply_markup)
     return BroadcastStates.RECEIVE_MESSAGE
 
 async def receive_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    logger.info(f"receive_message called. User ID: {update.effective_user.id}, Message Text: {update.message.text}")
     context.user_data['broadcast_text'] = update.message.text
     keyboard = [
-        [get_message(context.user_data, "confirm_button"), get_message(context.user_data, "cancel_button")]
+        [get_message(context.user_data, "confirm_button")] # Faqat tasdiqlash tugmasi qoldirildi
     ]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
     await update.message.reply_text(get_message(context.user_data, "broadcast_confirm_message").format(message=update.message.text), reply_markup=reply_markup)
     return BroadcastStates.CONFIRM_BROADCAST
 
 async def confirm_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    logger.info(f"confirm_broadcast called. User ID: {update.effective_user.id}, Choice: {update.message.text}")
     choice = update.message.text
     if choice == get_message(context.user_data, "confirm_button"):
         await send_broadcast(update, context)
         return ConversationHandler.END
-    elif choice == get_message(context.user_data, "cancel_button"):
-        await update.message.reply_text(get_message(context.user_data, "broadcast_cancelled"))
-        return ConversationHandler.END
     else:
-        await update.message.reply_text(get_message(context.user_data, "invalid_choice"))
+        await update.message.reply_text(get_message(context.user_data, "invalid_choice")) # Faqat tasdiqlashni kutamiz
         return BroadcastStates.CONFIRM_BROADCAST
 
 async def send_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -51,33 +51,24 @@ async def send_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(get_message(context.user_data, "broadcast_error"))
         return
 
-    users = get_all_contacts() # Database'dan barcha foydalanuvchilarni olish
-    groups = get_all_groups() # Database'dan barcha guruhlarni olish
+    groups_data = await get_all_groups() # Database'dan barcha guruhlarni olish
     
+    # Faqat group_id ni ajratib olamiz
+    groups_chat_ids = [group['group_id'] for group in groups_data] # Guruh ID lari string bo'lishi mumkin
+    logger.info(f"Retrieved group chat IDs: {groups_chat_ids}")
+
     sent_count = 0
     failed_count = 0
 
-    for user_id in users:
+    for chat_id in groups_chat_ids:
         try:
-            await context.bot.send_message(chat_id=user_id, text=message_to_send)
+            await context.bot.send_message(chat_id=chat_id, text=message_to_send)
             sent_count += 1
         except Exception as e:
-            logger.error(f"Xabar {user_id} ga yuborishda xato: {e}")
-            failed_count += 1
-
-    for group_id in groups:
-        try:
-            await context.bot.send_message(chat_id=group_id, text=message_to_send)
-            sent_count += 1
-        except Exception as e:
-            logger.error(f"Xabar {group_id} ga yuborishda xato: {e}")
+            logger.error(f"Xabar {chat_id} (guruh) ga yuborishda xato: {e}")
             failed_count += 1
 
     await update.message.reply_text(get_message(context.user_data, "broadcast_success").format(sent=sent_count, failed=failed_count))
-
-async def cancel_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text(get_message(context.user_data, "broadcast_cancelled"))
-    return ConversationHandler.END
 
 def get_broadcast_conversation_handler() -> ConversationHandler:
     return ConversationHandler(
@@ -86,7 +77,7 @@ def get_broadcast_conversation_handler() -> ConversationHandler:
             BroadcastStates.RECEIVE_MESSAGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_message)],
             BroadcastStates.CONFIRM_BROADCAST: [MessageHandler(filters.TEXT & ~filters.COMMAND, confirm_broadcast)]
         },
-        fallbacks=[MessageHandler(filters.Regex(get_message({}, "cancel_button")), cancel_broadcast)]
+        fallbacks=[] # Fallbacks olib tashlandi
     )
 
 async def is_admin(user_id):

@@ -2,9 +2,13 @@ import logging
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import ContextTypes, CommandHandler, ConversationHandler, MessageHandler, filters
 from config import ADMINS
-from database import get_all_groups, get_all_contacts, get_group_count, get_contact_count, log_admin_action, get_all_feedback
+from database import get_all_groups, get_all_contacts, get_group_count, get_contact_count, log_admin_action, get_all_feedback, get_user_count_from_json # Yangilangan importlar
 from language_handler import get_message
 from keyboards import get_main_menu_keyboard
+import re # Yangi import
+from broadcast_handler import start_broadcast, BroadcastStates # Yangi import
+
+logger = logging.getLogger(__name__)
 
 def get_admin_main_menu_keyboard():
     # Admin paneli uchun faqat O'zbek tilidagi tugmalar
@@ -17,10 +21,6 @@ def get_admin_main_menu_keyboard():
         [get_message(user_data_uz, "broadcast_message_button")]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
-
-# Log konfiguratsiyasi
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # Admin panel holatlari
 class AdminStates:
@@ -55,7 +55,26 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     message_text = update.message.text
-    logger.info(f"Admin message handler ishga tushdi. User ID: {user_id}, Message Text: {message_text}")
+    logger.info(f"Admin message handler ishga tushdi. User ID: {user_id}, Message Text: '{message_text}'")
+    
+    user_data_uz = {'language': 'uz'}
+    
+    # Har bir tugma matnini logga chiqarish
+    stats_btn_text = get_message(user_data_uz, "stats_button").strip()
+    groups_btn_text = get_message(user_data_uz, "groups_button").strip()
+    contacts_btn_text = get_message(user_data_uz, "contacts_button").strip()
+    add_balance_btn_text = get_message(user_data_uz, "add_balance_button").strip()
+    close_btn_text = get_message(user_data_uz, "close_button").strip()
+    feedback_list_btn_text = get_message(user_data_uz, "feedback_list_button").strip()
+    broadcast_message_btn_text = get_message(user_data_uz, "broadcast_message_button").strip()
+    
+    logger.debug(f"Expected Stats Button: '{stats_btn_text}'")
+    logger.debug(f"Expected Groups Button: '{groups_btn_text}'")
+    logger.debug(f"Expected Contacts Button: '{contacts_btn_text}'")
+    logger.debug(f"Expected Add Balance Button: '{add_balance_btn_text}'")
+    logger.debug(f"Expected Close Button: '{close_btn_text}'")
+    logger.debug(f"Expected Feedback List Button: '{feedback_list_btn_text}'")
+    logger.debug(f"Expected Broadcast Message Button: '{broadcast_message_btn_text}'")
     
     if not is_admin(user_id):
         logger.warning(f"Admin bo'lmagan foydalanuvchi ({user_id}) admin tugmasini bosdi.")
@@ -63,14 +82,16 @@ async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
         return ConversationHandler.END
     
     try:
-        user_data_uz = {'language': 'uz'}
-        if message_text == get_message(user_data_uz, "stats_button"):
+        if message_text == stats_btn_text:
             logger.debug(f"Admin stats tugmasi bosildi. User ID: {user_id}")
             group_count = await get_group_count()
             contact_count = await get_contact_count()
             
+            total_users_json = await get_user_count_from_json() # JSON faylidan foydalanuvchilar sonini olish
+            
             await update.message.reply_text(
                 get_message(user_data_uz, "bot_stats_title") + "\n\n" +
+                get_message(user_data_uz, "total_bot_users", count=total_users_json) + "\n" +
                 get_message(user_data_uz, "group_count", count=group_count) + "\n" +
                 get_message(user_data_uz, "contact_count", count=contact_count) + "\n" +
                 get_message(user_data_uz, "last_update"),
@@ -78,7 +99,7 @@ async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
             )
             await log_admin_action(user_id, "view_stats", "system", "none")
             
-        elif message_text == get_message(user_data_uz, "groups_button"):
+        elif message_text == groups_btn_text:
             logger.debug(f"Admin groups tugmasi bosildi. User ID: {user_id}")
             groups = await get_all_groups()
             if not groups:
@@ -88,7 +109,7 @@ async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
             
             groups_text = get_message(user_data_uz, "all_groups_title") + "\n\n"
             for group in groups[:10]:  # Faqat birinchi 10 tasini ko'rsatamiz
-                groups_text += f"🆔 {group[1]}\n📛 {group[2]}\n📅 {group[3]}\n\n"
+                groups_text += f"🆔 {group['group_id']}\n📛 {group['group_name']}\n📅 {group['added_date']}\n\n"
             
             if len(groups) > 10:
                 groups_text += get_message(user_data_uz, "more_groups", count=len(groups)-10)
@@ -97,7 +118,7 @@ async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
             await log_admin_action(user_id, "view_groups", "system", "none")
             logger.debug(f"Admin groups ma'lumotlari ko'rsatildi. Admin ID: {user_id}")
             
-        elif message_text == get_message(user_data_uz, "contacts_button"):
+        elif message_text == contacts_btn_text:
             logger.debug(f"Admin contacts tugmasi bosildi. User ID: {user_id}")
             contacts = await get_all_contacts()
             if not contacts:
@@ -116,7 +137,7 @@ async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
             await log_admin_action(user_id, "view_contacts", "system", "none")
             logger.debug(f"Admin contacts ma'lumotlari ko'rsatildi. Admin ID: {user_id}")
             
-        elif message_text == get_message(user_data_uz, "add_balance_button"):
+        elif message_text == add_balance_btn_text:
             logger.debug(f"Admin add_balance tugmasi bosildi. User ID: {user_id}")
             await update.message.reply_text(
                 get_message(user_data_uz, "add_balance_title") + "\n\n" +
@@ -126,7 +147,7 @@ async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
             logger.debug(f"Admin ADD_BALANCE holatiga o'tmoqda. Admin ID: {user_id}")
             return AdminStates.ADD_BALANCE
             
-        elif message_text == get_message(user_data_uz, "close_button"):
+        elif message_text == close_btn_text:
             logger.debug(f"Admin close tugmasi bosildi. User ID: {user_id}")
             await update.message.reply_text(get_message(user_data_uz, "admin_panel_close"))
             await log_admin_action(user_id, "close_admin_panel", "system", "none")
@@ -139,7 +160,7 @@ async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
             logger.debug(f"Admin panel yopildi. Asosiy menyuga qaytmoqda. Admin ID: {user_id}")
             return ConversationHandler.END
             
-        elif message_text == get_message(user_data_uz, "feedback_list_button"):
+        elif message_text == feedback_list_btn_text:
             logger.debug(f"Admin feedback list tugmasi bosildi. User ID: {user_id}")
             feedback_list = await get_all_feedback()
             
@@ -154,17 +175,11 @@ async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
             await update.message.reply_text(message_text, parse_mode="Markdown")
             return AdminStates.MAIN_MENU
             
-        elif message_text == get_message(user_data_uz, "broadcast_message_button"):
-            # Admin broadcast tugmasi bosildi
-            logger.debug(f"Admin broadcast tugmasi bosildi. User ID: {user_id}")
-            await update.message.reply_text(
-                get_message(user_data_uz, "broadcast_start_message"),
-                parse_mode="Markdown"
-            )
-            # ConversationHandler.END bilan tugatish yoki boshqa holatga o'tkazish mumkin
-            return ConversationHandler.END # Broadcast handled by separate handler for now
+        elif message_text == broadcast_message_btn_text:
+            logger.debug(f"Admin broadcast tugmasi bosildi. User ID: {user_id}. Broadcast suhbatini boshlamoqda.")
+            return await start_broadcast(update, context)
 
-        logger.warning(f"Noma'lum xabar ({message_text}) admin panelda. User ID: {user_id}")
+        logger.warning(f"Noma'lum xabar ('{message_text}') admin panelda. User ID: {user_id}")
         return AdminStates.MAIN_MENU
     except Exception as e:
         logger.error(f"Admin message handlerda xatolik yuz berdi: {e}")
@@ -226,7 +241,15 @@ def get_admin_conversation_handler():
         entry_points=[CommandHandler("admin", admin_panel)],
         states={
             AdminStates.MAIN_MENU: [
-                MessageHandler(filters.Regex(f"^({get_message({'language': 'uz'}, 'stats_button')}|{get_message({'language': 'uz'}, 'groups_button')}|{get_message({'language': 'uz'}, 'contacts_button')}|{get_message({'language': 'uz'}, 'add_balance_button')}|{get_message({'language': 'uz'}, 'close_button')}|{get_message({'language': 'uz'}, 'feedback_list_button')}|{get_message({'language': 'uz'}, 'broadcast_message_button')})$"), admin_message_handler)
+                MessageHandler(filters.Text([
+                    get_message({'language': 'uz'}, "stats_button").strip(),
+                    get_message({'language': 'uz'}, "groups_button").strip(),
+                    get_message({'language': 'uz'}, "contacts_button").strip(),
+                    get_message({'language': 'uz'}, "add_balance_button").strip(),
+                    get_message({'language': 'uz'}, "close_button").strip(),
+                    get_message({'language': 'uz'}, "feedback_list_button").strip(),
+                    get_message({'language': 'uz'}, "broadcast_message_button").strip()
+                ]), admin_message_handler)
             ],
             AdminStates.ADD_BALANCE: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_balance)],
         },

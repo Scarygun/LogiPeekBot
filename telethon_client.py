@@ -1,30 +1,31 @@
 import asyncio
 from telethon import TelegramClient
 from telethon.tl.types import Message
-from config import USER_API_ID, USER_API_HASH # Update import
+from config import USER_API_ID, USER_API_HASH, USER_PHONE_NUMBER
 from database import get_all_groups
 import logging
-import re # Added for regex
+import re
 
-# Log konfiguratsiyasi
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Telethon klienti
 class CustomTelethonClient:
     def __init__(self):
         self.client = None
-        self.api_id = USER_API_ID # Use user API ID for search
-        self.api_hash = USER_API_HASH # Use user API hash for search
-        self.session_name = 'logi_peek_bot_session' # Use an in-memory session for Telethon to avoid file locks
+        self.api_id = USER_API_ID
+        self.api_hash = USER_API_HASH
+        self.phone_number = USER_PHONE_NUMBER
+        self.session_name = 'logi_peek_bot_session'
         self.is_authorized = False
     
     async def connect(self):
         if not self.api_id or not self.api_hash:
             raise ValueError("USER_API_ID yoki USER_API_HASH topilmadi. .env faylini tekshiring.")
+        if not self.phone_number:
+            raise ValueError("USER_PHONE_NUMBER topilmadi. .env faylini tekshiring.")
         
         self.client = TelegramClient(self.session_name, self.api_id, self.api_hash)
-        await self.client.start()
+        await self.client.start(phone=self.phone_number)
         self.is_authorized = True
         print("Telethon client (foydalanuvchi rejimida) muvaffaqiyatli ulandi")
         return True
@@ -45,20 +46,19 @@ class CustomTelethonClient:
             groups = await get_all_groups()
             logger.info(f"Qidirilmoqda: From '{from_city}', To '{to_city}' ")
             
-            # Qidiruv so'rovlari ro'yxati
             search_queries = [
                 f"{from_city}-{to_city}",
                 f"{to_city}-{from_city}",
-                f"{from_city} {to_city}", # Oldingi variantni ham qoldiramiz
-                f"{to_city} {from_city}"  # Oldingi variantni ham qoldiramiz
+                f"{from_city} {to_city}",
+                f"{to_city} {from_city}"
             ]
             found_first_match = False
 
             for group_entry in groups:
-                if found_first_match: # Birinchi topilgan yukni olgach, boshqa guruhlarni tekshirmaymiz
+                if found_first_match:
                     break
 
-                group_id_raw = group_entry['group_id'] # row_factory tufayli lug'at sifatida olinadi
+                group_id_raw = group_entry['group_id'] # O'zgartirildi: group_entry['group_id'] orqali group_id ni olamiz
                 
                 match = re.match(r'(?:https?://)?t.me/([a-zA-Z0-9_]+)', group_id_raw)
                 if match:
@@ -93,12 +93,12 @@ class CustomTelethonClient:
                                     'text': message.text,
                                     'link': link
                                 })
-                                found_first_match = True # Birinchi topilgan yukni belgilaymiz
-                                break # Faqat bitta yukni olamiz
+                                found_first_match = True
+                                break
                         if found_first_match:
                             break
                     
-                    if not found_first_match: # Agar bu guruhda topilmasa, keyingi guruhga o'tamiz
+                    if not found_first_match:
                         logger.info(f"Guruhda hech qanday so'rov bo'yicha xabar topilmadi: {group_id}")
                 except Exception as e:
                     logger.error(f"Guruh ({group_id}) ichida qidirishda xatolik: {e}")
@@ -112,5 +112,4 @@ class CustomTelethonClient:
             await self.client.disconnect()
             self.is_authorized = False
 
-# Global telethon klienti
 telethon_client = CustomTelethonClient()

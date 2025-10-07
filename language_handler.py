@@ -40,6 +40,7 @@ MESSAGES = {
         "group_count": "👥 Guruhlar soni: {count}",
         "contact_count": "📞 Kontaktlar soni: {count}",
         "last_update": "🔄 Oxirgi yangilanish: Hozir",
+        "total_bot_users": "📊 Bot a'zolari soni: {count}",
         "no_groups_found": "❌ Guruhlar topilmadi!",
         "all_groups_title": "👥 **Barcha Guruhlar**",
         "more_groups": "📝 ... va yana {count} ta guruh",
@@ -120,6 +121,7 @@ MESSAGES = {
         "group_count": "👥 Количество групп: {count}",
         "contact_count": "📞 Количество контактов: {count}",
         "last_update": "🔄 Последнее обновление: Сейчас",
+        "total_bot_users": "📊 Bot a'zolari soni: {count}",
         "no_groups_found": "❌ Группы не найдены!",
         "all_groups_title": "👥 **Все группы**",
         "more_groups": "📝 ... и еще {count} групп",
@@ -150,7 +152,7 @@ MESSAGES = {
         "search_in_progress": "🔍 **Процесс поиска**\n\n📍 {from_city} ➡️ {to_city}\n\n⏳ Поиск по группам...",
         "search_results_found": "✅ **Найдено {count} грузов!**\n\n🔍 {from_city} ➡️ {to_city}",
         "search_more_results": "📝 И еще {count} результатов...",
-        "search_no_results": "❌ **Груз не найден**\n\n🔍 {from_city} ➡️ {to_city}\n\n**Возможные причины:**\n• Грузов по этому направлению нет\n• Группы закрыты или недоступны\n• Нет активности за последние дни\n\n💡 Попробуйте другие направления",
+        "search_no_results": "❌ **Груз не найден**\n\n🔍 {from_city} ➡️ {to_city}\n\n**Ehtimoliy sabablar:**\n• Грузов по этому направлению нет\n• Группы закрыты или недоступны\n• Нет активности за последние дни\n\n💡 Попробуйте другие направления",
         "search_error_unexpected": "❌ В процессе поиска произошла ошибка. Пожалуйста, попробуйте позже.",
         "search_cancelled": "Поиск отменен.",
         "help_message": "Пожалуйста, напишите @Xx19_99 – мы немедленно вам поможем! 😊",
@@ -167,7 +169,7 @@ MESSAGES = {
         "select_language_text": "Iltimos, tilni tanlang:",
         "bot_description_title": "Bot nima qila oladi?",
         "bot_description_line1": "🚀 Bu bot sizga yuk topishda yordam beradi!",
-        "bot_username": "@YukQidirishBot", # Example bot username, replace if actual is different
+        "bot_username": "@logi_peek_bot", # Example bot username, replace if actual is different
         "bot_description_line2_8d": "🔍 Tez va oson yuk qidirish",
         "bot_description_line3_concert": "👥 Guruhlar va kontaktlar qo'shish",
         "bot_description_line4_slowed": "💰 Balansingizni tekshirish va to'ldirish",
