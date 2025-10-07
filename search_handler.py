@@ -113,11 +113,6 @@ async def process_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     return ConversationHandler.END
 
-# Bekor qilish
-async def cancel_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(get_message(context.user_data, "search_cancelled"))
-    return ConversationHandler.END
-
 # Conversation handler yaratish
 def get_search_conversation_handler():
     return ConversationHandler(
@@ -131,10 +126,5 @@ def get_search_conversation_handler():
             SearchStates.WAITING_FROM: [MessageHandler(filters.TEXT & ~filters.COMMAND, process_from)],
             SearchStates.WAITING_TO: [MessageHandler(filters.TEXT & ~filters.COMMAND, process_to)],
         },
-        fallbacks=[
-            MessageHandler(
-                filters.Regex(f"^({get_message({'language': 'uz'}, 'cancel_button')}|{get_message({'language': 'ru'}, 'cancel_button')}|Cancel)$"), 
-                cancel_search
-            )
-        ],
+        fallbacks=[] # Fallbacks olib tashlandi
     )

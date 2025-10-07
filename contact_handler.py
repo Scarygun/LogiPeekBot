@@ -4,8 +4,6 @@ from telegram.ext import ContextTypes, ConversationHandler, MessageHandler, filt
 from database import add_contact # database modulini import qilamiz
 from language_handler import get_message
 
-# Log konfiguratsiyasi
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Kontakt qo'shish holatlari
@@ -44,12 +42,6 @@ async def process_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     return ConversationHandler.END
 
-# Bekor qilish
-async def cancel_add_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(get_message(context.user_data, "contact_add_cancelled"))
-    return ConversationHandler.END
-
-# Conversation handler yaratish
 def get_contact_conversation_handler():
     return ConversationHandler(
         entry_points=[
@@ -61,10 +53,5 @@ def get_contact_conversation_handler():
         states={
             ContactStates.WAITING_CONTACT: [MessageHandler(filters.TEXT & ~filters.COMMAND, process_contact)],
         },
-        fallbacks=[
-            MessageHandler(
-                filters.Regex(f"^({get_message({'language': 'uz'}, 'cancel_button')}|{get_message({'language': 'ru'}, 'cancel_button')}|Cancel)$"), 
-                cancel_add_contact
-            )
-        ],
+        fallbacks=[]
     )

@@ -157,3 +157,31 @@ Hozir srochno
 
 Toshkent r...
 2025-10-07 23:01:14,946 - database - INFO - User 8093402925 allaqachon JSON faylida mavjud.
+2025-10-07 23:54:18,722 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
+2025-10-07 23:55:07,549 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
+2025-10-07 23:56:34,902 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
+2025-10-07 23:57:21,446 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
+2025-10-07 23:58:11,765 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
+2025-10-07 23:58:12,467 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
+2025-10-07 23:58:12,574 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
+2025-10-07 23:58:13,154 - __main__ - INFO - Telethon client muvaffaqiyatli ulandi
+2025-10-07 23:58:13,275 - __main__ - INFO - Persistent bot commands set.
+2025-10-07 23:58:13,457 - telegram.ext.Application - INFO - Application started
+2025-10-07 23:58:29,131 - database - INFO - User 8093402925 allaqachon JSON faylida mavjud.
+2025-10-07 23:58:45,543 - telethon_client - INFO - Qidirilmoqda: From 'toshkent', To 'fargona' 
+2025-10-07 23:58:45,545 - telethon_client - INFO - Guruh qidirilmoqda: @yukbor7
+2025-10-07 23:58:45,694 - telethon_client - INFO - Guruh obyekti olindi: Yuk tashish xizmati🚛🚚
+2025-10-07 23:58:45,694 - telethon_client - INFO - Guruh '@yukbor7' ichida 'toshkent-fargona' so'rovi bo'yicha qidirilmoqda (limit: 1)...
+2025-10-07 23:58:45,838 - telethon_client - INFO - Xabar topildi (@yukbor7, so'rov: 'toshkent-fargona'): Ohangarondan Namangan kosonga
+Yuk gisht 
+Tent plashatka kerak
+Hozir srochno
+95-366-02-40
+
+Toshkent r...
+2025-10-07 23:59:00,927 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '📊 Statistika'
+2025-10-07 23:59:01,224 - admin_handler - WARNING - Noma'lum xabar ('📊 Statistika') admin panelda. User ID: 8093402925
+2025-10-07 23:59:07,052 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: 'Fikrlar ro'yxati'
+2025-10-07 23:59:12,386 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '📢 Xabar tarqatish'
+2025-10-07 23:59:12,388 - broadcast_handler - INFO - start_broadcast called by user 8093402925
+2025-10-07 23:59:23,266 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '❌ Yopish'

@@ -3,6 +3,9 @@ from telegram import Update
 from telegram.ext import ConversationHandler, MessageHandler, filters, ContextTypes
 from database import save_feedback
 from language_handler import get_message
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Feedback uchun maxsus holatlar
 FEEDBACK_TEXT = 1
@@ -20,10 +23,6 @@ async def feedback_received(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     await update.message.reply_text(get_message(context.user_data, "feedback_thanks"))
     return ConversationHandler.END
 
-async def feedback_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text(get_message(context.user_data, "feedback_cancelled"))
-    return ConversationHandler.END
-
 def get_feedback_conversation_handler() -> ConversationHandler:
     return ConversationHandler(
         entry_points=[
@@ -35,11 +34,5 @@ def get_feedback_conversation_handler() -> ConversationHandler:
         states={
             FEEDBACK_TEXT: [MessageHandler(filters.TEXT & ~filters.COMMAND, feedback_received)]
         },
-        fallbacks=[
-            MessageHandler(
-                filters.Regex(f"^({get_message({'language': 'uz'}, 'cancel_button')}|{get_message({'language': 'ru'}, 'cancel_button')}|Cancel)$"), 
-                feedback_cancel
-            ),
-            MessageHandler(filters.COMMAND, feedback_cancel)
-        ]
+        fallbacks=[]
     )

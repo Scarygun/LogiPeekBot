@@ -4,6 +4,7 @@ import asyncio
 import logging
 import json
 from datetime import datetime
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +83,7 @@ def _save_users_to_json_sync(users: dict):
 async def save_users_to_json(users: dict):
     await asyncio.to_thread(_save_users_to_json_sync, users)
 
-async def add_user_to_json(user_id: int, username: str | None):
+async def add_user_to_json(user_id: int, username: Optional[str]):
     users = await load_users_from_json()
     if str(user_id) not in users:
         users[str(user_id)] = {

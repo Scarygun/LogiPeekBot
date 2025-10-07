@@ -5,8 +5,6 @@ from telegram.ext import ContextTypes, ConversationHandler, MessageHandler, filt
 from database import add_group
 from language_handler import get_message
 
-# Log konfiguratsiyasi
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Gruh qo'shish holatlari
@@ -48,11 +46,6 @@ async def process_group(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     return ConversationHandler.END
 
-# Bekor qilish
-async def cancel_add_group(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(get_message(context.user_data, "group_add_cancelled"))
-    return ConversationHandler.END
-
 # Conversation handler yaratish
 def get_group_conversation_handler():
     return ConversationHandler(
@@ -65,10 +58,5 @@ def get_group_conversation_handler():
         states={
             GroupStates.WAITING_GROUP: [MessageHandler(filters.TEXT & ~filters.COMMAND, process_group)],
         },
-        fallbacks=[
-            MessageHandler(
-                filters.Regex(f"^({get_message({'language': 'uz'}, 'cancel_button')}|{get_message({'language': 'ru'}, 'cancel_button')}|Cancel)$"), 
-                cancel_add_group
-            )
-        ],
+        fallbacks=[]
     )
