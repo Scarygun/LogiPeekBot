@@ -4,6 +4,7 @@ from telegram import Update
 from telegram.ext import ContextTypes, ConversationHandler, MessageHandler, filters
 from database import add_group
 from language_handler import get_message
+from telegram.helpers import escape_markdown
 
 logger = logging.getLogger(__name__)
 
@@ -35,13 +36,13 @@ async def process_group(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if await add_group(group_id, group_name):
         await update.message.reply_text(
-            get_message(context.user_data, "group_add_success", group_name=group_name),
-            parse_mode="Markdown"
+            get_message(context.user_data, "group_add_success", group_name=escape_markdown(group_name, version=2)),
+            parse_mode="MarkdownV2"
         )
     else:
         await update.message.reply_text(
             get_message(context.user_data, "group_add_error"),
-            parse_mode="Markdown"
+            parse_mode="MarkdownV2"
         )
     
     return ConversationHandler.END
