@@ -35,7 +35,7 @@ async def process_group(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if await add_group(group_id, group_name):
         await update.message.reply_text(
-            get_message(context.user_data, "group_add_success", group_id=group_id),
+            get_message(context.user_data, "group_add_success", group_name=group_name),
             parse_mode="Markdown"
         )
     else:

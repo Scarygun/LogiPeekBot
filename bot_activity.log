@@ -99,3 +99,130 @@
 2025-10-10 00:06:18,463 - admin_handler - DEBUG - Admin close tugmasi bosildi. User ID: 8093402925
 2025-10-10 00:06:18,989 - admin_handler - DEBUG - Admin panel yopildi. Asosiy menyuga qaytmoqda. Admin ID: 8093402925
 2025-10-10 00:06:24,150 - database - INFO - Guruh @dispetcheruzchanel (@dispetcheruzchanel) ma'lumotlar bazasiga qo'shildi.
+2025-10-10 00:46:29,768 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
+2025-10-10 00:46:30,034 - admin_handler - DEBUG - Admin ConversationHandler yaratilmoqda...
+2025-10-10 00:46:30,467 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
+2025-10-10 00:46:30,572 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
+2025-10-10 00:46:30,868 - __main__ - ERROR - Bot initialization error: The authorization key (session file) was used under two different IP addresses simultaneously, and can no longer be used. Use the same session exclusively, or use different sessions (caused by InvokeWithLayerRequest(InitConnectionRequest(GetConfigRequest)))
+2025-10-10 00:46:30,981 - telegram.ext.Application - INFO - Application started
+2025-10-10 00:46:31,306 - database - INFO - User 8093402925 allaqachon JSON faylida mavjud.
+2025-10-10 00:55:16,464 - telethon.network.connection.connection - WARNING - Server closed the connection: 0 bytes read on a total of 8 expected bytes
+2025-10-10 00:55:16,465 - telethon.network.connection.connection - WARNING - Server closed the connection: 0 bytes read on a total of 8 expected bytes
+2025-10-10 00:55:16,466 - telethon.network.mtprotosender - ERROR - Unhandled error while receiving data
+Traceback (most recent call last):
+  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/mtprotosender.py", line 505, in _recv_loop
+    body = await self._connection.recv()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/connection.py", line 301, in recv
+    raise err
+  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/connection.py", line 332, in _recv_loop
+    data = await self._recv()
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/connection.py", line 369, in _recv
+    return await self._codec.read_packet(self._reader)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/tcpfull.py", line 25, in read_packet
+    packet_len_seq = await reader.readexactly(8)  # 4 and 4
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/streams.py", line 750, in readexactly
+    raise exceptions.IncompleteReadError(incomplete, n)
+asyncio.exceptions.IncompleteReadError: 0 bytes read on a total of 8 expected bytes
+2025-10-10 00:55:16,477 - telethon.network.connection.connection - WARNING - Server closed the connection: 0 bytes read on a total of 8 expected bytes
+2025-10-10 00:55:16,478 - telethon.network.mtprotosender - INFO - Closing current connection to begin reconnect...
+2025-10-10 00:55:16,481 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
+2025-10-10 00:55:16,587 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
+2025-10-10 00:55:16,587 - telethon.network.mtprotosender - ERROR - Unhandled error while receiving data
+Traceback (most recent call last):
+  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/mtprotosender.py", line 505, in _recv_loop
+    body = await self._connection.recv()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/connection.py", line 301, in recv
+    raise err
+  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/connection.py", line 332, in _recv_loop
+    data = await self._recv()
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/connection.py", line 369, in _recv
+    return await self._codec.read_packet(self._reader)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/tcpfull.py", line 25, in read_packet
+    packet_len_seq = await reader.readexactly(8)  # 4 and 4
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/streams.py", line 750, in readexactly
+    raise exceptions.IncompleteReadError(incomplete, n)
+asyncio.exceptions.IncompleteReadError: 0 bytes read on a total of 8 expected bytes
+2025-10-10 00:55:16,591 - telethon.network.mtprotosender - INFO - Closing current connection to begin reconnect...
+2025-10-10 00:55:16,592 - telethon.network.mtprotosender - INFO - Connection closed while sending data
+2025-10-10 00:55:16,595 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
+2025-10-10 00:55:16,698 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
+2025-10-10 00:55:16,810 - telethon.client.updates - WARNING - Error executing high-level request after reconnect: <class 'telethon.errors.rpcerrorlist.AuthKeyDuplicatedError'>: The authorization key (session file) was used under two different IP addresses simultaneously, and can no longer be used. Use the same session exclusively, or use different sessions (caused by GetUsersRequest)
+2025-10-10 00:55:16,811 - telethon.client.updates - WARNING - Error executing high-level request after reconnect: <class 'telethon.errors.rpcerrorlist.AuthKeyDuplicatedError'>: The authorization key (session file) was used under two different IP addresses simultaneously, and can no longer be used. Use the same session exclusively, or use different sessions (caused by GetUsersRequest)
+2025-10-10 01:06:30,993 - telethon.network.connection.connection - WARNING - Server closed the connection: 0 bytes read on a total of 8 expected bytes
+2025-10-10 01:06:30,994 - telethon.network.connection.connection - WARNING - Server closed the connection: 0 bytes read on a total of 8 expected bytes
+2025-10-10 01:06:30,994 - telethon.network.mtprotosender - ERROR - Unhandled error while receiving data
+Traceback (most recent call last):
+  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/mtprotosender.py", line 505, in _recv_loop
+    body = await self._connection.recv()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/connection.py", line 301, in recv
+    raise err
+  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/connection.py", line 332, in _recv_loop
+    data = await self._recv()
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/connection.py", line 369, in _recv
+    return await self._codec.read_packet(self._reader)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/tcpfull.py", line 25, in read_packet
+    packet_len_seq = await reader.readexactly(8)  # 4 and 4
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/streams.py", line 750, in readexactly
+    raise exceptions.IncompleteReadError(incomplete, n)
+asyncio.exceptions.IncompleteReadError: 0 bytes read on a total of 8 expected bytes
+2025-10-10 01:06:30,997 - telethon.network.connection.connection - WARNING - Server closed the connection: 0 bytes read on a total of 8 expected bytes
+2025-10-10 01:06:30,997 - telethon.network.mtprotosender - INFO - Closing current connection to begin reconnect...
+2025-10-10 01:06:31,000 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
+2025-10-10 01:06:31,105 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
+2025-10-10 01:06:31,106 - telethon.network.mtprotosender - ERROR - Unhandled error while receiving data
+Traceback (most recent call last):
+  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/mtprotosender.py", line 505, in _recv_loop
+    body = await self._connection.recv()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/connection.py", line 301, in recv
+    raise err
+  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/connection.py", line 332, in _recv_loop
+    data = await self._recv()
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/connection.py", line 369, in _recv
+    return await self._codec.read_packet(self._reader)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/tcpfull.py", line 25, in read_packet
+    packet_len_seq = await reader.readexactly(8)  # 4 and 4
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/streams.py", line 750, in readexactly
+    raise exceptions.IncompleteReadError(incomplete, n)
+asyncio.exceptions.IncompleteReadError: 0 bytes read on a total of 8 expected bytes
+2025-10-10 01:06:31,110 - telethon.network.mtprotosender - INFO - Closing current connection to begin reconnect...
+2025-10-10 01:06:31,112 - telethon.network.mtprotosender - INFO - Connection closed while sending data
+2025-10-10 01:06:31,113 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
+2025-10-10 01:06:31,233 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
+2025-10-10 01:06:31,400 - telethon.client.updates - WARNING - Error executing high-level request after reconnect: <class 'telethon.errors.rpcerrorlist.AuthKeyDuplicatedError'>: The authorization key (session file) was used under two different IP addresses simultaneously, and can no longer be used. Use the same session exclusively, or use different sessions (caused by GetUsersRequest)
+2025-10-10 01:06:31,412 - telethon.client.updates - WARNING - Error executing high-level request after reconnect: <class 'telethon.errors.rpcerrorlist.AuthKeyDuplicatedError'>: The authorization key (session file) was used under two different IP addresses simultaneously, and can no longer be used. Use the same session exclusively, or use different sessions (caused by GetUsersRequest)
+2025-10-10 01:16:49,965 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
+2025-10-10 01:16:50,200 - admin_handler - DEBUG - Admin ConversationHandler yaratilmoqda...
+2025-10-10 01:16:50,541 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
+2025-10-10 01:16:50,687 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
+2025-10-10 01:16:50,948 - __main__ - ERROR - Bot initialization error: The authorization key (session file) was used under two different IP addresses simultaneously, and can no longer be used. Use the same session exclusively, or use different sessions (caused by InvokeWithLayerRequest(InitConnectionRequest(GetConfigRequest)))
+2025-10-10 01:16:51,060 - telegram.ext.Application - INFO - Application started
+2025-10-10 01:17:06,838 - database - INFO - User 8093402925 allaqachon JSON faylida mavjud.
+2025-10-10 01:17:17,570 - database - INFO - Guruh @yukbor7 (@yukbor7) ma'lumotlar bazasiga qo'shildi.
+2025-10-10 01:17:24,832 - admin_handler - DEBUG - Admin panel buyrug'i ishga tushdi. User ID: 8093402925
+2025-10-10 01:17:25,238 - admin_handler - DEBUG - Admin panel MAIN_MENU holatiga qaytmoqda. User ID: 8093402925. Return state: 1
+2025-10-10 01:17:30,252 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '📊 Statistika'
+2025-10-10 01:17:30,254 - admin_handler - DEBUG - Expected Stats Button: '📊 Statistika'
+2025-10-10 01:17:30,254 - admin_handler - DEBUG - Expected Groups Button: '👥 Guruhlar'
+2025-10-10 01:17:30,255 - admin_handler - DEBUG - Expected Contacts Button: '📞 Kontaktlar'
+2025-10-10 01:17:30,256 - admin_handler - DEBUG - Expected Add Balance Button: '💰 Balans qo'shish'
+2025-10-10 01:17:30,257 - admin_handler - DEBUG - Expected Close Button: '❌ Yopish'
+2025-10-10 01:17:30,259 - admin_handler - DEBUG - Expected Feedback List Button: 'Fikrlar ro'yxati'
+2025-10-10 01:17:30,260 - admin_handler - DEBUG - Expected Broadcast Message Button: '📢 Xabar tarqatish'
+2025-10-10 01:17:30,262 - admin_handler - DEBUG - Admin stats tugmasi bosildi. User ID: 8093402925
+2025-10-10 01:17:30,762 - admin_handler - WARNING - Noma'lum xabar ('📊 Statistika') admin panelda. User ID: 8093402925

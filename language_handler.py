@@ -62,7 +62,7 @@ MESSAGES = {
         "feedback_thanks": "Fikringiz uchun rahmat!",
         "feedback_cancelled": "Fikr bildirish bekor qilindi.",
         "group_add_start": "👥 **Guruh qo'shish**\n\nGuruh ID, username yoki linkini yuboring:",
-        "group_add_success": "✅ Guruh muvaffaqiyatli qo'shildi!",
+        "group_add_success": "✅ Guruh muvaffaqiyatli qo'shildi:\n{group_name}",
         "group_add_error": "❌ Guruhni qo'shishda xatolik yuz berdi yoki guruh allaqachon mavjud.",
         "group_add_cancelled": "Guruh qo'shish bekor qilindi.",
         "search_error_telethon_not_connected": "❌ **Xato!**\n\nTelethon ulanmagan. Botni qayta ishga tushiring.\nAdmin bilan bog'laning: @Xx19_99",
