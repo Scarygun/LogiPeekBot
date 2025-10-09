@@ -226,3 +226,17 @@ asyncio.exceptions.IncompleteReadError: 0 bytes read on a total of 8 expected by
 2025-10-10 01:17:30,260 - admin_handler - DEBUG - Expected Broadcast Message Button: '📢 Xabar tarqatish'
 2025-10-10 01:17:30,262 - admin_handler - DEBUG - Admin stats tugmasi bosildi. User ID: 8093402925
 2025-10-10 01:17:30,762 - admin_handler - WARNING - Noma'lum xabar ('📊 Statistika') admin panelda. User ID: 8093402925
+2025-10-10 02:15:24,143 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
+2025-10-10 02:15:24,376 - admin_handler - DEBUG - Admin ConversationHandler yaratilmoqda...
+2025-10-10 02:15:24,803 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
+2025-10-10 02:15:24,908 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
+2025-10-10 02:15:25,146 - __main__ - ERROR - Bot initialization error: The authorization key (session file) was used under two different IP addresses simultaneously, and can no longer be used. Use the same session exclusively, or use different sessions (caused by InvokeWithLayerRequest(InitConnectionRequest(GetConfigRequest)))
+2025-10-10 02:15:25,265 - telegram.ext.Application - INFO - Application started
+2025-10-10 02:15:25,591 - admin_handler - DEBUG - Admin panel buyrug'i ishga tushdi. User ID: 8093402925
+2025-10-10 02:15:25,748 - admin_handler - DEBUG - Admin panel MAIN_MENU holatiga qaytmoqda. User ID: 8093402925. Return state: 1
+2025-10-10 02:18:13,692 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
+2025-10-10 02:18:13,916 - admin_handler - DEBUG - Admin ConversationHandler yaratilmoqda...
+2025-10-10 02:18:14,459 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
+2025-10-10 02:18:14,564 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
+2025-10-10 02:18:14,826 - __main__ - ERROR - Bot initialization error: The authorization key (session file) was used under two different IP addresses simultaneously, and can no longer be used. Use the same session exclusively, or use different sessions (caused by InvokeWithLayerRequest(InitConnectionRequest(GetConfigRequest)))
+2025-10-10 02:18:14,943 - telegram.ext.Application - INFO - Application started

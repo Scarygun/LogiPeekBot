@@ -17,7 +17,7 @@ BOT_TOKEN = '8321048668:AAHVU1ITY_uatfMuHZ9cubuHtboufiTAj_k'
 # Foydalanuvchi Telethon sozlamalari
 USER_API_ID = 26813019
 USER_API_HASH = 'c4590c3e2164e40785b8f6000a427a6a'
-USER_PHONE_NUMBER = '+998333196991' # Telethon foydalanuvchi hisobi uchun telefon raqami
+USER_PHONE_NUMBER = '+998947030352' # Telethon foydalanuvchi hisobi uchun telefon raqami
 
 # Log fayli sozlamalari
 LOG_FILE_NAME = 'bot_activity.log' # Bot loglarini saqlash uchun fayl nomi

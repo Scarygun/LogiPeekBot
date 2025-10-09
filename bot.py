@@ -2,6 +2,7 @@ import os
 import logging
 import re
 from config import LOG_FILE_NAME # LOG_FILE_NAME bu yerga ko'chirildi
+from typing import Optional # Add this import
 
 # Log konfiguratsiyasi
 # Asosiy loggerni sozlash
@@ -51,7 +52,7 @@ from keyboards import get_main_menu_keyboard # Yangi import
 # )""")
 # conn.commit()
 
-async def add_group(chat_id: int, title: str | None):
+async def add_group(chat_id: int, title: Optional[str]): # Changed str | None to Optional[str]
     await add_group(chat_id, title) # database.py dagi funksiyani chaqirish
 
 async def remove_group(chat_id: int):
