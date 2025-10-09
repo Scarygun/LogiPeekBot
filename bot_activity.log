@@ -1,187 +1,101 @@
-2025-10-06 23:46:03,237 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
-2025-10-06 23:46:03,820 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
-2025-10-06 23:46:03,923 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
-2025-10-06 23:46:08,942 - __main__ - ERROR - Bot initialization error: database is locked
-2025-10-06 23:46:09,294 - telegram.ext.Application - INFO - Application started
-2025-10-06 23:46:25,067 - database - INFO - User 8093402925 allaqachon JSON faylida mavjud.
-2025-10-06 23:46:40,009 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '📊 Statistika'
-2025-10-06 23:46:40,404 - admin_handler - WARNING - Noma'lum xabar ('📊 Statistika') admin panelda. User ID: 8093402925
-2025-10-06 23:47:17,093 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
-2025-10-06 23:47:17,810 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
-2025-10-06 23:47:17,918 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
-2025-10-06 23:47:22,938 - __main__ - ERROR - Bot initialization error: database is locked
-2025-10-06 23:47:23,279 - telegram.ext.Application - INFO - Application started
-2025-10-06 23:47:29,132 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '📢 Xabar tarqatish'
-2025-10-06 23:48:48,022 - telethon.network.connection.connection - WARNING - Server closed the connection: 0 bytes read on a total of 8 expected bytes
-2025-10-06 23:48:48,023 - telethon.network.connection.connection - WARNING - Server closed the connection: 0 bytes read on a total of 8 expected bytes
-2025-10-06 23:48:48,024 - telethon.network.mtprotosender - ERROR - Unhandled error while receiving data
-Traceback (most recent call last):
-  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/mtprotosender.py", line 505, in _recv_loop
-    body = await self._connection.recv()
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/connection.py", line 301, in recv
-    raise err
-  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/connection.py", line 332, in _recv_loop
-    data = await self._recv()
-           ^^^^^^^^^^^^^^^^^^
-  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/connection.py", line 369, in _recv
-    return await self._codec.read_packet(self._reader)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/tcpfull.py", line 25, in read_packet
-    packet_len_seq = await reader.readexactly(8)  # 4 and 4
-                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.12/asyncio/streams.py", line 750, in readexactly
-    raise exceptions.IncompleteReadError(incomplete, n)
-asyncio.exceptions.IncompleteReadError: 0 bytes read on a total of 8 expected bytes
-2025-10-06 23:48:48,032 - telethon.network.connection.connection - WARNING - Server closed the connection: 0 bytes read on a total of 8 expected bytes
-2025-10-06 23:48:48,033 - telethon.network.mtprotosender - INFO - Closing current connection to begin reconnect...
-2025-10-06 23:48:48,036 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
-2025-10-06 23:48:48,143 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
-2025-10-06 23:48:48,143 - telethon.network.mtprotosender - ERROR - Unhandled error while receiving data
-Traceback (most recent call last):
-  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/mtprotosender.py", line 505, in _recv_loop
-    body = await self._connection.recv()
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/connection.py", line 301, in recv
-    raise err
-  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/connection.py", line 332, in _recv_loop
-    data = await self._recv()
-           ^^^^^^^^^^^^^^^^^^
-  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/connection.py", line 369, in _recv
-    return await self._codec.read_packet(self._reader)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/scarygun/Desktop/telegram_bot (2)/telegram_bot/venv/lib/python3.12/site-packages/telethon/network/connection/tcpfull.py", line 25, in read_packet
-    packet_len_seq = await reader.readexactly(8)  # 4 and 4
-                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.12/asyncio/streams.py", line 750, in readexactly
-    raise exceptions.IncompleteReadError(incomplete, n)
-asyncio.exceptions.IncompleteReadError: 0 bytes read on a total of 8 expected bytes
-2025-10-06 23:48:48,144 - telethon.network.mtprotosender - INFO - Closing current connection to begin reconnect...
-2025-10-06 23:48:48,144 - telethon.network.mtprotosender - INFO - Connection closed while sending data
-2025-10-06 23:48:48,145 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
-2025-10-06 23:48:48,252 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
-2025-10-06 23:48:53,613 - telethon.client.updates - WARNING - Error executing high-level request after reconnect: <class 'sqlite3.OperationalError'>: database is locked
-2025-10-06 23:48:58,640 - telethon.client.updates - WARNING - Error executing high-level request after reconnect: <class 'sqlite3.OperationalError'>: database is locked
-2025-10-07 20:40:39,747 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
-2025-10-07 20:40:40,728 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
-2025-10-07 20:40:40,929 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
-2025-10-07 20:40:41,832 - __main__ - INFO - Telethon client muvaffaqiyatli ulandi
-2025-10-07 20:40:42,056 - __main__ - INFO - Persistent bot commands set.
-2025-10-07 20:40:42,193 - telegram.ext.Application - INFO - Application started
-2025-10-07 20:41:21,830 - database - WARNING - JSON fayl (users.json) buzilgan. Bo'sh lug'at qaytarilmoqda.
-2025-10-07 20:41:21,844 - database - INFO - User 8093402925 JSON fayliga qo'shildi.
-2025-10-07 20:41:42,810 - database - INFO - User 7377275622 JSON fayliga qo'shildi.
-2025-10-07 20:42:03,579 - database - INFO - User 404161884 JSON fayliga qo'shildi.
-2025-10-07 20:42:16,682 - database - INFO - User 6475387133 JSON fayliga qo'shildi.
-2025-10-07 20:42:51,318 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '📊 Statistika'
-2025-10-07 20:42:51,712 - admin_handler - WARNING - Noma'lum xabar ('📊 Statistika') admin panelda. User ID: 8093402925
-2025-10-07 20:43:47,770 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '📞 Kontaktlar'
-2025-10-07 20:43:53,122 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '👥 Guruhlar'
-2025-10-07 20:43:53,401 - admin_handler - WARNING - Noma'lum xabar ('👥 Guruhlar') admin panelda. User ID: 8093402925
-2025-10-07 20:43:58,532 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: 'Fikrlar ro'yxati'
-2025-10-07 20:44:03,881 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '📢 Xabar tarqatish'
-2025-10-07 20:45:54,775 - database - INFO - User 8093402925 allaqachon JSON faylida mavjud.
-2025-10-07 20:46:05,912 - language_handler - INFO - User 8093402925 selected language: ru
-2025-10-07 20:46:16,611 - language_handler - INFO - User 8093402925 selected language: uz
-2025-10-07 20:46:28,086 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '📢 Xabar tarqatish'
-2025-10-07 20:46:55,459 - database - INFO - User 8093402925 allaqachon JSON faylida mavjud.
-2025-10-07 20:47:31,517 - database - INFO - User 5744416158 JSON fayliga qo'shildi.
-2025-10-07 20:47:47,000 - language_handler - INFO - User 5744416158 selected language: uz
-2025-10-07 20:48:27,320 - telethon_client - INFO - Qidirilmoqda: From 'Samarqand', To 'Samarqand' 
-2025-10-07 20:48:27,321 - telethon_client - ERROR - Telethon qidiruv xatosi: expected string or bytes-like object, got 'sqlite3.Row'
-2025-10-07 20:57:04,492 - telethon.client.updates - INFO - Got difference for account updates
-2025-10-07 21:07:51,179 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
-2025-10-07 21:07:51,986 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
-2025-10-07 21:07:52,090 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
-2025-10-07 21:07:52,729 - __main__ - INFO - Telethon client muvaffaqiyatli ulandi
-2025-10-07 21:07:52,848 - __main__ - INFO - Persistent bot commands set.
-2025-10-07 21:07:52,977 - telegram.ext.Application - INFO - Application started
-2025-10-07 21:09:56,790 - database - INFO - User 8093402925 allaqachon JSON faylida mavjud.
-2025-10-07 21:22:52,835 - telethon.client.updates - INFO - Got difference for account updates
-2025-10-07 21:37:53,064 - telethon.client.updates - INFO - Got difference for account updates
-2025-10-07 22:07:53,473 - telethon.client.updates - INFO - Got difference for account updates
-2025-10-07 22:18:12,485 - database - INFO - User 8093402925 allaqachon JSON faylida mavjud.
-2025-10-07 22:18:25,900 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: 'Fikrlar ro'yxati'
-2025-10-07 22:18:31,254 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '📢 Xabar tarqatish'
-2025-10-07 22:47:29,958 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
-2025-10-07 22:47:30,726 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
-2025-10-07 22:47:30,832 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
-2025-10-07 22:47:31,437 - __main__ - INFO - Telethon client muvaffaqiyatli ulandi
-2025-10-07 22:47:31,576 - __main__ - INFO - Persistent bot commands set.
-2025-10-07 22:47:31,697 - telegram.ext.Application - INFO - Application started
-2025-10-07 22:47:39,513 - database - INFO - User 8093402925 allaqachon JSON faylida mavjud.
-2025-10-07 22:47:50,488 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '📢 Xabar tarqatish'
-2025-10-07 22:53:25,897 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
-2025-10-07 22:53:26,558 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
-2025-10-07 22:53:26,661 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
-2025-10-07 22:53:27,538 - __main__ - INFO - Telethon client muvaffaqiyatli ulandi
-2025-10-07 22:53:27,678 - __main__ - INFO - Persistent bot commands set.
-2025-10-07 22:53:27,791 - telegram.ext.Application - INFO - Application started
-2025-10-07 22:53:40,377 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '📢 Xabar tarqatish'
-2025-10-07 22:53:40,378 - broadcast_handler - INFO - start_broadcast called by user 8093402925
-2025-10-07 22:58:20,242 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
-2025-10-07 22:58:20,807 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
-2025-10-07 22:58:20,910 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
-2025-10-07 22:58:21,509 - __main__ - INFO - Telethon client muvaffaqiyatli ulandi
-2025-10-07 22:58:21,687 - __main__ - INFO - Persistent bot commands set.
-2025-10-07 22:58:21,802 - telegram.ext.Application - INFO - Application started
-2025-10-07 22:58:34,161 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '📢 Xabar tarqatish'
-2025-10-07 22:58:34,162 - broadcast_handler - INFO - start_broadcast called by user 8093402925
-2025-10-07 22:58:48,585 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '❌ Yopish'
-2025-10-07 22:59:01,365 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '📢 Xabar tarqatish'
-2025-10-07 22:59:01,366 - broadcast_handler - INFO - start_broadcast called by user 8093402925
-2025-10-07 22:59:12,191 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '❌ Yopish'
-2025-10-07 22:59:48,858 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '📊 Statistika'
-2025-10-07 22:59:49,266 - admin_handler - WARNING - Noma'lum xabar ('📊 Statistika') admin panelda. User ID: 8093402925
-2025-10-07 23:00:09,631 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '❌ Yopish'
-2025-10-07 23:00:28,718 - telethon_client - INFO - Qidirilmoqda: From 'Toshkent', To 'Farg'ona' 
-2025-10-07 23:00:28,718 - telethon_client - INFO - Guruh qidirilmoqda: @yukbor7
-2025-10-07 23:00:28,836 - telethon_client - INFO - Guruh obyekti olindi: Yuk tashish xizmati🚛🚚
-2025-10-07 23:00:28,837 - telethon_client - INFO - Guruh '@yukbor7' ichida 'Toshkent-Farg'ona' so'rovi bo'yicha qidirilmoqda (limit: 1)...
-2025-10-07 23:00:28,980 - telethon_client - INFO - Xabar topildi (@yukbor7, so'rov: 'Toshkent-Farg'ona'): **Toshkent ---  Farg'ona**
-Ertagalikka 
-Fura 
-Shakar
-Nomer: +998905505166
-_________...
-2025-10-07 23:00:29,488 - search_handler - ERROR - Xabar yuborishda xatolik: Can't parse entities: can't find end of the entity starting at byte offset 154
-2025-10-07 23:00:54,948 - telethon_client - INFO - Qidirilmoqda: From 'toshkent', To 'fargona' 
-2025-10-07 23:00:54,949 - telethon_client - INFO - Guruh qidirilmoqda: @yukbor7
-2025-10-07 23:00:55,195 - telethon_client - INFO - Guruh obyekti olindi: Yuk tashish xizmati🚛🚚
-2025-10-07 23:00:55,196 - telethon_client - INFO - Guruh '@yukbor7' ichida 'toshkent-fargona' so'rovi bo'yicha qidirilmoqda (limit: 1)...
-2025-10-07 23:00:55,416 - telethon_client - INFO - Xabar topildi (@yukbor7, so'rov: 'toshkent-fargona'): Ohangarondan Namangan kosonga
-Yuk gisht 
-Tent plashatka kerak
-Hozir srochno
-95-366-02-40
-
-Toshkent r...
-2025-10-07 23:01:14,946 - database - INFO - User 8093402925 allaqachon JSON faylida mavjud.
-2025-10-07 23:54:18,722 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
-2025-10-07 23:55:07,549 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
-2025-10-07 23:56:34,902 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
-2025-10-07 23:57:21,446 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
-2025-10-07 23:58:11,765 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
-2025-10-07 23:58:12,467 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
-2025-10-07 23:58:12,574 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
-2025-10-07 23:58:13,154 - __main__ - INFO - Telethon client muvaffaqiyatli ulandi
-2025-10-07 23:58:13,275 - __main__ - INFO - Persistent bot commands set.
-2025-10-07 23:58:13,457 - telegram.ext.Application - INFO - Application started
-2025-10-07 23:58:29,131 - database - INFO - User 8093402925 allaqachon JSON faylida mavjud.
-2025-10-07 23:58:45,543 - telethon_client - INFO - Qidirilmoqda: From 'toshkent', To 'fargona' 
-2025-10-07 23:58:45,545 - telethon_client - INFO - Guruh qidirilmoqda: @yukbor7
-2025-10-07 23:58:45,694 - telethon_client - INFO - Guruh obyekti olindi: Yuk tashish xizmati🚛🚚
-2025-10-07 23:58:45,694 - telethon_client - INFO - Guruh '@yukbor7' ichida 'toshkent-fargona' so'rovi bo'yicha qidirilmoqda (limit: 1)...
-2025-10-07 23:58:45,838 - telethon_client - INFO - Xabar topildi (@yukbor7, so'rov: 'toshkent-fargona'): Ohangarondan Namangan kosonga
-Yuk gisht 
-Tent plashatka kerak
-Hozir srochno
-95-366-02-40
-
-Toshkent r...
-2025-10-07 23:59:00,927 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '📊 Statistika'
-2025-10-07 23:59:01,224 - admin_handler - WARNING - Noma'lum xabar ('📊 Statistika') admin panelda. User ID: 8093402925
-2025-10-07 23:59:07,052 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: 'Fikrlar ro'yxati'
-2025-10-07 23:59:12,386 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '📢 Xabar tarqatish'
-2025-10-07 23:59:12,388 - broadcast_handler - INFO - start_broadcast called by user 8093402925
-2025-10-07 23:59:23,266 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '❌ Yopish'
+2025-10-10 00:00:52,588 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
+2025-10-10 00:00:52,892 - admin_handler - DEBUG - Admin ConversationHandler yaratilmoqda...
+2025-10-10 00:00:53,252 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
+2025-10-10 00:00:53,360 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
+2025-10-10 00:00:53,595 - __main__ - ERROR - Bot initialization error: The authorization key (session file) was used under two different IP addresses simultaneously, and can no longer be used. Use the same session exclusively, or use different sessions (caused by InvokeWithLayerRequest(InitConnectionRequest(GetConfigRequest)))
+2025-10-10 00:00:53,717 - telegram.ext.Application - INFO - Application started
+2025-10-10 00:01:09,537 - database - INFO - User 8093402925 allaqachon JSON faylida mavjud.
+2025-10-10 00:02:17,242 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
+2025-10-10 00:02:17,565 - admin_handler - DEBUG - Admin ConversationHandler yaratilmoqda...
+2025-10-10 00:02:17,968 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
+2025-10-10 00:02:18,139 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
+2025-10-10 00:02:18,381 - __main__ - ERROR - Bot initialization error: The authorization key (session file) was used under two different IP addresses simultaneously, and can no longer be used. Use the same session exclusively, or use different sessions (caused by InvokeWithLayerRequest(InitConnectionRequest(GetConfigRequest)))
+2025-10-10 00:02:18,486 - telegram.ext.Application - INFO - Application started
+2025-10-10 00:02:27,373 - database - INFO - User 8093402925 allaqachon JSON faylida mavjud.
+2025-10-10 00:02:43,464 - admin_handler - DEBUG - Admin panel buyrug'i ishga tushdi. User ID: 8093402925
+2025-10-10 00:02:43,890 - admin_handler - DEBUG - Admin panel MAIN_MENU holatiga qaytmoqda. User ID: 8093402925. Return state: 1
+2025-10-10 00:02:48,865 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '📊 Statistika'
+2025-10-10 00:02:48,866 - admin_handler - DEBUG - Expected Stats Button: '📊 Statistika'
+2025-10-10 00:02:48,866 - admin_handler - DEBUG - Expected Groups Button: '👥 Guruhlar'
+2025-10-10 00:02:48,867 - admin_handler - DEBUG - Expected Contacts Button: '📞 Kontaktlar'
+2025-10-10 00:02:48,867 - admin_handler - DEBUG - Expected Add Balance Button: '💰 Balans qo'shish'
+2025-10-10 00:02:48,868 - admin_handler - DEBUG - Expected Close Button: '❌ Yopish'
+2025-10-10 00:02:48,868 - admin_handler - DEBUG - Expected Feedback List Button: 'Fikrlar ro'yxati'
+2025-10-10 00:02:48,869 - admin_handler - DEBUG - Expected Broadcast Message Button: '📢 Xabar tarqatish'
+2025-10-10 00:02:48,869 - admin_handler - DEBUG - Admin stats tugmasi bosildi. User ID: 8093402925
+2025-10-10 00:02:49,281 - admin_handler - WARNING - Noma'lum xabar ('📊 Statistika') admin panelda. User ID: 8093402925
+2025-10-10 00:02:57,020 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '👥 Guruhlar'
+2025-10-10 00:02:57,020 - admin_handler - DEBUG - Expected Stats Button: '📊 Statistika'
+2025-10-10 00:02:57,021 - admin_handler - DEBUG - Expected Groups Button: '👥 Guruhlar'
+2025-10-10 00:02:57,021 - admin_handler - DEBUG - Expected Contacts Button: '📞 Kontaktlar'
+2025-10-10 00:02:57,021 - admin_handler - DEBUG - Expected Add Balance Button: '💰 Balans qo'shish'
+2025-10-10 00:02:57,022 - admin_handler - DEBUG - Expected Close Button: '❌ Yopish'
+2025-10-10 00:02:57,022 - admin_handler - DEBUG - Expected Feedback List Button: 'Fikrlar ro'yxati'
+2025-10-10 00:02:57,022 - admin_handler - DEBUG - Expected Broadcast Message Button: '📢 Xabar tarqatish'
+2025-10-10 00:02:57,023 - admin_handler - DEBUG - Admin groups tugmasi bosildi. User ID: 8093402925
+2025-10-10 00:02:57,463 - admin_handler - DEBUG - Admin groups ma'lumotlari ko'rsatildi. Admin ID: 8093402925
+2025-10-10 00:02:57,464 - admin_handler - WARNING - Noma'lum xabar ('👥 Guruhlar') admin panelda. User ID: 8093402925
+2025-10-10 00:03:17,756 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '❌ Yopish'
+2025-10-10 00:03:17,756 - admin_handler - DEBUG - Expected Stats Button: '📊 Statistika'
+2025-10-10 00:03:17,757 - admin_handler - DEBUG - Expected Groups Button: '👥 Guruhlar'
+2025-10-10 00:03:17,758 - admin_handler - DEBUG - Expected Contacts Button: '📞 Kontaktlar'
+2025-10-10 00:03:17,758 - admin_handler - DEBUG - Expected Add Balance Button: '💰 Balans qo'shish'
+2025-10-10 00:03:17,759 - admin_handler - DEBUG - Expected Close Button: '❌ Yopish'
+2025-10-10 00:03:17,759 - admin_handler - DEBUG - Expected Feedback List Button: 'Fikrlar ro'yxati'
+2025-10-10 00:03:17,760 - admin_handler - DEBUG - Expected Broadcast Message Button: '📢 Xabar tarqatish'
+2025-10-10 00:03:17,760 - admin_handler - DEBUG - Admin close tugmasi bosildi. User ID: 8093402925
+2025-10-10 00:03:18,319 - admin_handler - DEBUG - Admin panel yopildi. Asosiy menyuga qaytmoqda. Admin ID: 8093402925
+2025-10-10 00:03:37,103 - admin_handler - DEBUG - Admin panel buyrug'i ishga tushdi. User ID: 8093402925
+2025-10-10 00:03:37,592 - admin_handler - DEBUG - Admin panel MAIN_MENU holatiga qaytmoqda. User ID: 8093402925. Return state: 1
+2025-10-10 00:03:42,755 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '📊 Statistika'
+2025-10-10 00:03:42,756 - admin_handler - DEBUG - Expected Stats Button: '📊 Statistika'
+2025-10-10 00:03:42,757 - admin_handler - DEBUG - Expected Groups Button: '👥 Guruhlar'
+2025-10-10 00:03:42,757 - admin_handler - DEBUG - Expected Contacts Button: '📞 Kontaktlar'
+2025-10-10 00:03:42,758 - admin_handler - DEBUG - Expected Add Balance Button: '💰 Balans qo'shish'
+2025-10-10 00:03:42,759 - admin_handler - DEBUG - Expected Close Button: '❌ Yopish'
+2025-10-10 00:03:42,760 - admin_handler - DEBUG - Expected Feedback List Button: 'Fikrlar ro'yxati'
+2025-10-10 00:03:42,760 - admin_handler - DEBUG - Expected Broadcast Message Button: '📢 Xabar tarqatish'
+2025-10-10 00:03:42,761 - admin_handler - DEBUG - Admin stats tugmasi bosildi. User ID: 8093402925
+2025-10-10 00:03:43,196 - admin_handler - WARNING - Noma'lum xabar ('📊 Statistika') admin panelda. User ID: 8093402925
+2025-10-10 00:05:25,704 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
+2025-10-10 00:05:25,937 - admin_handler - DEBUG - Admin ConversationHandler yaratilmoqda...
+2025-10-10 00:05:26,305 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
+2025-10-10 00:05:26,408 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
+2025-10-10 00:05:26,674 - __main__ - ERROR - Bot initialization error: The authorization key (session file) was used under two different IP addresses simultaneously, and can no longer be used. Use the same session exclusively, or use different sessions (caused by InvokeWithLayerRequest(InitConnectionRequest(GetConfigRequest)))
+2025-10-10 00:05:26,793 - telegram.ext.Application - INFO - Application started
+2025-10-10 00:05:31,344 - admin_handler - DEBUG - Admin panel buyrug'i ishga tushdi. User ID: 8093402925
+2025-10-10 00:05:31,601 - admin_handler - DEBUG - Admin panel MAIN_MENU holatiga qaytmoqda. User ID: 8093402925. Return state: 1
+2025-10-10 00:05:36,801 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '❌ Yopish'
+2025-10-10 00:05:36,802 - admin_handler - DEBUG - Expected Stats Button: '📊 Statistika'
+2025-10-10 00:05:36,803 - admin_handler - DEBUG - Expected Groups Button: '👥 Guruhlar'
+2025-10-10 00:05:36,804 - admin_handler - DEBUG - Expected Contacts Button: '📞 Kontaktlar'
+2025-10-10 00:05:36,805 - admin_handler - DEBUG - Expected Add Balance Button: '💰 Balans qo'shish'
+2025-10-10 00:05:36,806 - admin_handler - DEBUG - Expected Close Button: '❌ Yopish'
+2025-10-10 00:05:36,807 - admin_handler - DEBUG - Expected Feedback List Button: 'Fikrlar ro'yxati'
+2025-10-10 00:05:36,809 - admin_handler - DEBUG - Expected Broadcast Message Button: '📢 Xabar tarqatish'
+2025-10-10 00:05:36,810 - admin_handler - DEBUG - Admin close tugmasi bosildi. User ID: 8093402925
+2025-10-10 00:05:37,375 - admin_handler - DEBUG - Admin panel yopildi. Asosiy menyuga qaytmoqda. Admin ID: 8093402925
+2025-10-10 00:05:52,865 - database - INFO - Guruh @yuk_uz_24 (@yuk_uz_24) ma'lumotlar bazasiga qo'shildi.
+2025-10-10 00:05:58,203 - admin_handler - DEBUG - Admin panel buyrug'i ishga tushdi. User ID: 8093402925
+2025-10-10 00:05:58,363 - admin_handler - DEBUG - Admin panel MAIN_MENU holatiga qaytmoqda. User ID: 8093402925. Return state: 1
+2025-10-10 00:06:03,611 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '📊 Statistika'
+2025-10-10 00:06:03,612 - admin_handler - DEBUG - Expected Stats Button: '📊 Statistika'
+2025-10-10 00:06:03,613 - admin_handler - DEBUG - Expected Groups Button: '👥 Guruhlar'
+2025-10-10 00:06:03,614 - admin_handler - DEBUG - Expected Contacts Button: '📞 Kontaktlar'
+2025-10-10 00:06:03,614 - admin_handler - DEBUG - Expected Add Balance Button: '💰 Balans qo'shish'
+2025-10-10 00:06:03,615 - admin_handler - DEBUG - Expected Close Button: '❌ Yopish'
+2025-10-10 00:06:03,615 - admin_handler - DEBUG - Expected Feedback List Button: 'Fikrlar ro'yxati'
+2025-10-10 00:06:03,615 - admin_handler - DEBUG - Expected Broadcast Message Button: '📢 Xabar tarqatish'
+2025-10-10 00:06:03,616 - admin_handler - DEBUG - Admin stats tugmasi bosildi. User ID: 8093402925
+2025-10-10 00:06:04,020 - admin_handler - WARNING - Noma'lum xabar ('📊 Statistika') admin panelda. User ID: 8093402925
+2025-10-10 00:06:18,448 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '❌ Yopish'
+2025-10-10 00:06:18,449 - admin_handler - DEBUG - Expected Stats Button: '📊 Statistika'
+2025-10-10 00:06:18,452 - admin_handler - DEBUG - Expected Groups Button: '👥 Guruhlar'
+2025-10-10 00:06:18,454 - admin_handler - DEBUG - Expected Contacts Button: '📞 Kontaktlar'
+2025-10-10 00:06:18,458 - admin_handler - DEBUG - Expected Add Balance Button: '💰 Balans qo'shish'
+2025-10-10 00:06:18,459 - admin_handler - DEBUG - Expected Close Button: '❌ Yopish'
+2025-10-10 00:06:18,461 - admin_handler - DEBUG - Expected Feedback List Button: 'Fikrlar ro'yxati'
+2025-10-10 00:06:18,463 - admin_handler - DEBUG - Expected Broadcast Message Button: '📢 Xabar tarqatish'
+2025-10-10 00:06:18,463 - admin_handler - DEBUG - Admin close tugmasi bosildi. User ID: 8093402925
+2025-10-10 00:06:18,989 - admin_handler - DEBUG - Admin panel yopildi. Asosiy menyuga qaytmoqda. Admin ID: 8093402925
+2025-10-10 00:06:24,150 - database - INFO - Guruh @dispetcheruzchanel (@dispetcheruzchanel) ma'lumotlar bazasiga qo'shildi.

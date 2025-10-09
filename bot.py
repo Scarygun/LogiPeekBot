@@ -1,5 +1,6 @@
 import os
 import logging
+import re
 from config import LOG_FILE_NAME # LOG_FILE_NAME bu yerga ko'chirildi
 
 # Log konfiguratsiyasi
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 # Httpx log levelini sozlash (ko'p ma'lumot chiqarmaslik uchun)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("telethon").setLevel(logging.INFO)
+logging.getLogger('admin_handler').setLevel(logging.DEBUG) # Add this line
 
 import sqlite3 # Yangi import
 # import gspread # Yangi import (ko'chirildi)

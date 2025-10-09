@@ -2,7 +2,7 @@
 import os
 
 # Adminlar ro'yxati
-ADMINS = [8093402925,5266500862, 6475387133, 103988086]
+ADMINS = [8093402925, 5266500862, 6475387133, 1039880863]
 
 # Bot egasining ID raqami (xabar tarqatish uchun)
 OWNER_ID = 8093402925 # O'zingizning Telegram ID'ingizni qo'ying

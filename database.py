@@ -180,15 +180,21 @@ async def get_all_feedback():
             return feedback
     return await asyncio.to_thread(_get_all_feedback_sync)
 
-async def add_group(chat_id: int, title: str | None):
-    def _add_group_sync(chat_id: int, title: str | None):
+async def add_group(chat_id: int, title: Optional[str]) -> bool:
+    def _add_group_sync(chat_id: int, title: Optional[str]) -> bool:
         with sqlite3.connect(DATABASE_NAME) as conn:
             cursor = conn.cursor()
             try:
                 cursor.execute("INSERT OR REPLACE INTO groups(group_id, group_name) VALUES (?, ?)", (chat_id, title))
                 conn.commit()
+                logger.info(f"Guruh {title} ({chat_id}) ma'lumotlar bazasiga qo'shildi.")
+                return True
+            except sqlite3.IntegrityError:
+                logger.warning(f"Guruh {title} ({chat_id}) allaqachon mavjud.")
+                return False
             except Exception as e:
-                logger.error(f"DB add error: {e}")
+                logger.error(f"DB add error for group {title} ({chat_id}): {e}")
+                return False
     return await asyncio.to_thread(_add_group_sync, chat_id, title)
 
 async def remove_group(chat_id: int):
