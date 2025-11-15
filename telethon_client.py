@@ -44,64 +44,182 @@ class CustomTelethonClient:
         
         try:
             groups = await get_all_groups()
-            logger.info(f"Qidirilmoqda: From '{from_city}', To '{to_city}' ")
+            total_groups = len(groups)
+            logger.info(f"Qidiruv boshlandi: From '{from_city}', To '{to_city}'")
+            logger.info(f"Jami {total_groups} ta guruhda qidirilmoqda...")
             
+            if total_groups == 0:
+                logger.warning("Ma'lumotlar bazasida guruhlar topilmadi!")
+                return []
+            
+            # Qaysi guruhlarda qidirilayotganini ko'rsatish
+            group_names = []
+            for group_entry in groups:
+                # sqlite3.Row obyekti .get() metodiga ega emas
+                try:
+                    group_name = str(group_entry['group_name']) if group_entry['group_name'] is not None else "Noma'lum"
+                except (KeyError, IndexError):
+                    group_name = "Noma'lum"
+                group_names.append(group_name)
+            logger.info(f"Qidirilayotgan guruhlar: {', '.join(group_names[:10])}{'...' if len(group_names) > 10 else ''}")
+            
+            # Manzil variantlarini yaratish (katta-kichik harf, variantlar)
+            from_city_variants = [
+                from_city.lower(),
+                from_city.upper(),
+                from_city.capitalize(),
+                from_city.title()
+            ]
+            to_city_variants = [
+                to_city.lower(),
+                to_city.upper(),
+                to_city.capitalize(),
+                to_city.title()
+            ]
+            
+            # Qidiruv so'rovlari - turli formatlarda
             search_queries = [
                 f"{from_city}-{to_city}",
                 f"{to_city}-{from_city}",
                 f"{from_city} {to_city}",
-                f"{to_city} {from_city}"
+                f"{to_city} {from_city}",
+                f"{from_city} -> {to_city}",
+                f"{to_city} <- {from_city}",
+                f"{from_city} → {to_city}",
+                f"{to_city} ← {from_city}"
             ]
-            found_first_match = False
+            
+            # Manzil variantlarini qo'shish
+            for from_var in from_city_variants:
+                for to_var in to_city_variants:
+                    if f"{from_var}-{to_var}" not in search_queries:
+                        search_queries.append(f"{from_var}-{to_var}")
+                    if f"{from_var} {to_var}" not in search_queries:
+                        search_queries.append(f"{from_var} {to_var}")
 
+            searched_groups = 0
             for group_entry in groups:
-                if found_first_match:
-                    break
-
-                group_id_raw = group_entry['group_id'] # O'zgartirildi: group_entry['group_id'] orqali group_id ni olamiz
+                group_id_raw = group_entry['group_id']
+                # sqlite3.Row obyekti .get() metodiga ega emas
+                try:
+                    group_name = str(group_entry['group_name']) if group_entry['group_name'] is not None else "Noma'lum"
+                except (KeyError, IndexError):
+                    group_name = "Noma'lum"
                 
-                match = re.match(r'(?:https?://)?t.me/([a-zA-Z0-9_]+)', group_id_raw)
+                # group_id ni to'g'ri formatga o'tkazish
+                group_id_str = str(group_id_raw)
+                match = re.match(r'(?:https?://)?t\.me/([a-zA-Z0-9_]+)', group_id_str)
                 if match:
                     group_id = match.group(1)
                 else:
                     group_id = group_id_raw
 
-                logger.info(f"Guruh qidirilmoqda: {group_id}")
+                searched_groups += 1
+                logger.info(f"[{searched_groups}/{total_groups}] Guruh qidirilmoqda: {group_name} (@{group_id})")
+                
                 try:
                     entity = await self.client.get_entity(group_id)
                     logger.info(f"Guruh obyekti olindi: {entity.title if hasattr(entity, 'title') else group_id}")
                     
-                    for query_text in search_queries:
-                        logger.info(f"Guruh '{group_id}' ichida '{query_text}' so'rovi bo'yicha qidirilmoqda (limit: 1)...")
-                        async for message in self.client.iter_messages(entity, search=query_text, limit=1):
-                            if isinstance(message, Message) and message.text:
-                                logger.info(f"Xabar topildi ({group_id}, so'rov: '{query_text}'): {message.text[:100]}...")
-                                
-                                if message.peer_id and hasattr(message.peer_id, 'channel_id'):
-                                    channel_username = (await self.client.get_entity(message.peer_id.channel_id)).username
-                                    if channel_username:
-                                        link = f"https://t.me/{channel_username}/{message.id}"
-                                    else:
-                                        link = "#"
-                                else:
-                                    link = "#"
-
-                                results.append({
-                                    'group_title': entity.title if entity.title else 'Noma’lum guruh',
-                                    'date': message.date.strftime('%Y-%m-%d'),
-                                    'sender': message.sender.first_name if message.sender else 'Noma’lum',
-                                    'text': message.text,
-                                    'link': link
-                                })
-                                found_first_match = True
-                                break
-                        if found_first_match:
-                            break
+                    # Xabarlarni olish va matnida manzilni tekshirish
+                    found_messages = set()  # Takrorlanishni oldini olish uchun
+                    found_in_group = False
                     
-                    if not found_first_match:
-                        logger.info(f"Guruhda hech qanday so'rov bo'yicha xabar topilmadi: {group_id}")
+                    # Avval Telegram search dan foydalanish
+                    for query_text in search_queries[:8]:  # Faqat asosiy so'rovlarni
+                        try:
+                            async for message in self.client.iter_messages(entity, search=query_text, limit=5):
+                                if isinstance(message, Message) and message.text and message.id not in found_messages:
+                                    found_messages.add(message.id)
+                                    found_in_group = True
+                                    
+                                    # Link yaratish
+                                    try:
+                                        if hasattr(message, 'peer_id') and message.peer_id:
+                                            if hasattr(message.peer_id, 'channel_id'):
+                                                channel_username = entity.username if hasattr(entity, 'username') else None
+                                                if channel_username:
+                                                    link = f"https://t.me/{channel_username}/{message.id}"
+                                                else:
+                                                    link = f"https://t.me/c/{abs(message.peer_id.channel_id)}/{message.id}"
+                                            else:
+                                                # Guruh bo'lsa
+                                                link = "#"
+                                        else:
+                                            link = "#"
+                                    except Exception as link_error:
+                                        logger.debug(f"Link yaratishda xatolik: {link_error}")
+                                        link = "#"
+
+                                    results.append({
+                                        'group_title': entity.title if hasattr(entity, 'title') else group_name,
+                                        'group_id': group_id,
+                                        'date': message.date.strftime('%Y-%m-%d %H:%M'),
+                                        'sender': message.sender.first_name if message.sender and hasattr(message.sender, 'first_name') else "Noma'lum",
+                                        'text': message.text,
+                                        'link': link,
+                                        'query': query_text
+                                    })
+                        except Exception as search_error:
+                            logger.debug(f"Qidiruv so'rovida xatolik ({query_text}): {search_error}")
+                            continue
+                    
+                    # Agar Telegram search natija bermasa, so'nggi xabarlarni tekshirish
+                    if not found_in_group:
+                        try:
+                            # So'nggi 50 ta xabarni olish va matnida manzilni tekshirish
+                            async for message in self.client.iter_messages(entity, limit=50):
+                                if isinstance(message, Message) and message.text and message.id not in found_messages:
+                                    message_text_lower = message.text.lower()
+                                    
+                                    # Manzil variantlarini tekshirish
+                                    from_found = any(var.lower() in message_text_lower for var in from_city_variants)
+                                    to_found = any(var.lower() in message_text_lower for var in to_city_variants)
+                                    
+                                    if from_found and to_found:
+                                        found_messages.add(message.id)
+                                        found_in_group = True
+                                        
+                                        # Link yaratish
+                                        try:
+                                            if hasattr(message, 'peer_id') and message.peer_id:
+                                                if hasattr(message.peer_id, 'channel_id'):
+                                                    channel_username = entity.username if hasattr(entity, 'username') else None
+                                                    if channel_username:
+                                                        link = f"https://t.me/{channel_username}/{message.id}"
+                                                    else:
+                                                        link = f"https://t.me/c/{abs(message.peer_id.channel_id)}/{message.id}"
+                                                else:
+                                                    link = "#"
+                                            else:
+                                                link = "#"
+                                        except Exception as link_error:
+                                            logger.debug(f"Link yaratishda xatolik: {link_error}")
+                                            link = "#"
+
+                                        results.append({
+                                            'group_title': entity.title if hasattr(entity, 'title') else group_name,
+                                            'group_id': group_id,
+                                            'date': message.date.strftime('%Y-%m-%d %H:%M'),
+                                            'sender': message.sender.first_name if message.sender and hasattr(message.sender, 'first_name') else "Noma'lum",
+                                            'text': message.text,
+                                            'link': link,
+                                            'query': f"{from_city} -> {to_city} (matn qidiruv)"
+                                        })
+                        except Exception as msg_error:
+                            logger.debug(f"Xabarlarni olishda xatolik: {msg_error}")
+                            continue
+                    
+                    if found_in_group:
+                        logger.info(f"✅ {group_name} guruhida {len([r for r in results if r.get('group_id') == group_id])} ta natija topildi")
+                    else:
+                        logger.info(f"❌ {group_name} guruhida natija topilmadi")
+                        
                 except Exception as e:
-                    logger.error(f"Guruh ({group_id}) ichida qidirishda xatolik: {e}")
+                    logger.error(f"❌ Guruh ({group_name} - {group_id}) ichida qidirishda xatolik: {e}")
+                    continue
+            
+            logger.info(f"Qidiruv yakunlandi. Jami {len(results)} ta natija topildi.")
             return results
         except Exception as e:
             logger.error(f"Telethon qidiruv xatosi: {e}")

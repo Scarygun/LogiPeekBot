@@ -25,7 +25,7 @@ import sqlite3 # Yangi import
 # import gspread # Yangi import (ko'chirildi)
 # from oauth2client.service_account import ServiceAccountCredentials # Yangi import (ko'chirildi)
 from config import BOT_TOKEN, OWNER_ID # LOG_FILE_NAME endi alohida import qilinadi
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ChatMemberHandler # ChatMemberHandler Yangi import
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ChatMemberHandler, CallbackQueryHandler # CallbackQueryHandler qo'shildi
 import telegram # Added for telegram.error.Conflict
 from search_handler import get_search_conversation_handler
 from group_handler import get_group_conversation_handler
@@ -33,11 +33,11 @@ from contact_handler import get_contact_conversation_handler
 from admin_handler import get_admin_conversation_handler
 from telethon_client import telethon_client
 from feedback_handler import get_feedback_conversation_handler
-from database import init_db, add_group, remove_group, get_all_groups, add_user_to_json, get_user_count_from_json # Yangilangan importlar
+from database import init_db, add_group, remove_group, get_all_groups, add_user_to_json, get_user_count_from_json, get_group_count_from_json # Yangilangan importlar
 from config import USER_API_ID, USER_API_HASH
 from menu import set_bot_commands
 from language_handler import get_message, get_language_conversation_handler, LanguageStates, start_language_selection
-from broadcast_handler import get_broadcast_conversation_handler # Olib tashlandi
+from broadcast_handler import get_broadcast_conversation_handler, stop_broadcast_command # Olib tashlandi
 from keyboards import get_main_menu_keyboard # Yangi import
 # from datetime import datetime # Yangi import
 
@@ -138,8 +138,8 @@ async def stats_command(update, context):
     
     total_users_json = await get_user_count_from_json() # JSON faylidan foydalanuvchilar sonini olish
 
-    # Guruhlar sonini olish
-    group_count = len(await get_all_groups()) if await get_all_groups() else 0
+    # Guruhlar sonini JSON fayldan olish
+    group_count = await get_group_count_from_json()
 
     # Kontaktlar sonini olish (agar tegishli funksiya mavjud bo'lsa, hozircha 0)
     contact_count = 0 # Hozircha nol, keyinchalik o'zgartirilishi mumkin
@@ -249,14 +249,18 @@ def main():
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("stats", stats_command)) # Yangi handler qo'shish
     application.add_handler(get_search_conversation_handler())
+    # Search sahifa o'zgartirish va natijani ko'rish uchun callback query handler
+    from search_handler import handle_search_page_callback
+    application.add_handler(CallbackQueryHandler(handle_search_page_callback, pattern="^search_"))
     application.add_handler(get_group_conversation_handler())
     application.add_handler(get_contact_conversation_handler())
+    application.add_handler(get_broadcast_conversation_handler())
     application.add_handler(get_admin_conversation_handler())
     application.add_handler(get_feedback_conversation_handler())
     application.add_handler(get_language_conversation_handler())
     application.add_handler(ChatMemberHandler(on_chat_member_update, ChatMemberHandler.MY_CHAT_MEMBER))
     application.add_handler(CommandHandler("broadcast", broadcast_command))
-    application.add_handler(get_broadcast_conversation_handler()) # Yangi handler qo'shish
+    application.add_handler(CommandHandler("stop_broadcast", stop_broadcast_command))
     
     # Til tanlash uchun yangi CommandHandler
     # application.add_handler(CommandHandler("language", start_language_selection))

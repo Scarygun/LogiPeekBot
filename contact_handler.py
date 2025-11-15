@@ -20,16 +20,34 @@ async def start_add_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Kontakt ma'lumotlarini qayta ishlash
 async def process_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    import re
     contact_info = update.message.text.strip()
     user_id = str(update.effective_user.id) # Kontakt qo'shayotgan foydalanuvchining ID si
     
-    # Hozircha oddiy tahlil, keyinchalik murakkablashishi mumkin
-    contact_user_id = contact_info # Qaysi foydalanuvchini qo'shayotganimizni bildiradi
-    contact_username = contact_info
-    contact_full_name = ""
-    contact_phone_number = ""
+    # Telefon raqamini ajratib olish
+    contact_phone_number = contact_info
+    contact_user_id = contact_info
+    
+    # Telefon raqamini tozalash va tekshirish
+    # Telefon raqami formatlari: +998901234567, 998901234567, 901234567
+    phone_pattern = r'^\+?998\d{9}$|^998\d{9}$|^\d{9}$'
+    cleaned_phone = contact_info.replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
+    
+    # Agar telefon raqami formatida bo'lsa
+    if re.match(phone_pattern, cleaned_phone):
+        if cleaned_phone.startswith('998') and not cleaned_phone.startswith('+998'):
+            contact_phone_number = '+' + cleaned_phone
+        elif cleaned_phone.startswith('9'):
+            contact_phone_number = '+998' + cleaned_phone
+        else:
+            contact_phone_number = cleaned_phone if cleaned_phone.startswith('+') else '+' + cleaned_phone
+    else:
+        # Agar telefon raqami emas bo'lsa, user_id sifatida ishlatamiz
+        contact_phone_number = contact_info
+        contact_user_id = contact_info
 
-    if await add_contact(contact_user_id, contact_username, contact_full_name, contact_phone_number):
+    # Faqat phone_number ni uzatamiz, username va full_name bo'sh
+    if await add_contact(contact_user_id, None, None, contact_phone_number):
         await update.message.reply_text(
             get_message(context.user_data, "contact_add_success", contact_info=contact_info),
             parse_mode="Markdown"

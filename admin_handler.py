@@ -2,7 +2,7 @@ import logging
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import ContextTypes, CommandHandler, ConversationHandler, MessageHandler, filters
 from config import ADMINS
-from database import get_all_groups, get_all_contacts, get_group_count, get_contact_count, log_admin_action, get_all_feedback, get_user_count_from_json # Yangilangan importlar
+from database import get_all_groups, get_all_contacts, get_group_count, get_contact_count, log_admin_action, get_all_feedback, get_user_count_from_json, get_group_count_from_json, get_contact_count_from_json, load_contacts_from_json # Yangilangan importlar
 from language_handler import get_message
 from keyboards import get_main_menu_keyboard
 import re # Yangi import
@@ -54,7 +54,7 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Admin tugmalarini qayta ishlash
 async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    message_text = update.message.text
+    message_text = update.message.text.strip() if update.message.text else ""
     logger.info(f"Admin message handler ishga tushdi. User ID: {user_id}, Message Text: '{message_text}'")
     
     user_data_uz = {'language': 'uz'}
@@ -75,6 +75,7 @@ async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
     logger.debug(f"Expected Close Button: '{close_btn_text}'")
     logger.debug(f"Expected Feedback List Button: '{feedback_list_btn_text}'")
     logger.debug(f"Expected Broadcast Message Button: '{broadcast_message_btn_text}'")
+    logger.debug(f"Received Message Text: '{message_text}' (length: {len(message_text)})")
     
     if not is_admin(user_id):
         logger.warning(f"Admin bo'lmagan foydalanuvchi ({user_id}) admin tugmasini bosdi.")
@@ -82,10 +83,11 @@ async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
         return ConversationHandler.END
     
     try:
+        # Matnlarni to'g'ri taqqoslash
         if message_text == stats_btn_text:
             logger.debug(f"Admin stats tugmasi bosildi. User ID: {user_id}")
-            group_count = await get_group_count()
-            contact_count = await get_contact_count()
+            group_count = await get_group_count_from_json() # JSON faylidan guruhlar sonini olish
+            contact_count = await get_contact_count_from_json() # JSON faylidan kontaktlar sonini olish
             
             total_users_json = await get_user_count_from_json() # JSON faylidan foydalanuvchilar sonini olish
             
@@ -98,6 +100,7 @@ async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
                 parse_mode="Markdown"
             )
             await log_admin_action(user_id, "view_stats", "system", "none")
+            return AdminStates.MAIN_MENU
             
         elif message_text == groups_btn_text:
             logger.debug(f"Admin groups tugmasi bosildi. User ID: {user_id}")
@@ -107,31 +110,119 @@ async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
                 logger.debug(f"Guruhlar topilmadi. Admin ID: {user_id}")
                 return AdminStates.MAIN_MENU
             
-            groups_text = get_message(user_data_uz, "all_groups_title") + "\n\n"
-            for group in groups[:10]:  # Faqat birinchi 10 tasini ko'rsatamiz
-                groups_text += f"🆔 {group['group_id']}\n📛 {group['group_name']}\n📅 {group['added_date']}\n\n"
+            from telegram.helpers import escape_markdown
             
-            if len(groups) > 10:
-                groups_text += get_message(user_data_uz, "more_groups", count=len(groups)-10)
+            # Telegram xabar maksimal uzunligi 4096 belgi
+            MAX_MESSAGE_LENGTH = 3000  # Xavfsizlik uchun biroz kamroq (escape qilingan matnlar uzunroq bo'lishi mumkin)
+            MAX_GROUPS_TO_SHOW = 50  # Maksimal ko'rsatiladigan guruhlar soni
             
-            await update.message.reply_text(groups_text, parse_mode="Markdown")
+            # Sarlavhani escape qilamiz
+            all_groups_title = escape_markdown(get_message(user_data_uz, "all_groups_title"), version=2)
+            groups_text = all_groups_title + "\n\n"
+            groups_shown = 0
+            total_groups = len(groups)
+            
+            # Birinchi xabarni yuborish funksiyasi
+            async def send_current_message():
+                nonlocal groups_text
+                if groups_text.strip() and groups_text.strip() != all_groups_title + "\n\n":
+                    try:
+                        # Xabar uzunligini tekshiramiz
+                        if len(groups_text) > 4096:
+                            # Xabarni qisqartiramiz
+                            groups_text = groups_text[:4000] + "\n\n... (xabar juda uzun, qisqartirildi)"
+                        await update.message.reply_text(groups_text, parse_mode="MarkdownV2")
+                        groups_text = ""  # Xabarni yuborilgandan keyin tozalaymiz
+                    except Exception as e:
+                        logger.error(f"Xabar yuborishda xatolik: {e}")
+                        # Xabar juda uzun bo'lsa, uni qisqartiramiz
+                        if "too long" in str(e).lower():
+                            # Xabarni yarmiga qisqartiramiz
+                            half_length = len(groups_text) // 2
+                            groups_text = groups_text[:half_length] + "\n\n... (xabar juda uzun, qisqartirildi)"
+                            try:
+                                await update.message.reply_text(groups_text, parse_mode="MarkdownV2")
+                                groups_text = ""
+                            except:
+                                pass
+            
+            for idx, group in enumerate(groups):
+                # Maksimal ko'rsatiladigan guruhlar sonini tekshiramiz
+                if groups_shown >= MAX_GROUPS_TO_SHOW:
+                    break
+                
+                # sqlite3.Row obyekti .get() metodiga ega emas, shuning uchun to'g'ridan-to'g'ri indekslash ishlatamiz
+                try:
+                    group_id = str(group['group_id'])
+                    # None tekshiruvi - agar None bo'lsa, default qiymat ishlatamiz
+                    group_name = str(group['group_name']) if group['group_name'] is not None else "Noma'lum"
+                    added_date = str(group['added_date']) if group['added_date'] is not None else "Noma'lum"
+                except (KeyError, IndexError, TypeError) as e:
+                    logger.warning(f"Guruh ma'lumotlarini olishda xatolik: {e}")
+                    # Fallback qiymatlar
+                    try:
+                        group_id = str(group['group_id']) if 'group_id' in group.keys() else "Noma'lum"
+                    except:
+                        group_id = "Noma'lum"
+                    group_name = "Noma'lum"
+                    added_date = "Noma'lum"
+                
+                # MarkdownV2 uchun maxsus belgilarni escape qilish
+                group_id_escaped = escape_markdown(group_id, version=2)
+                group_name_escaped = escape_markdown(group_name, version=2)
+                added_date_escaped = escape_markdown(added_date, version=2)
+                
+                # Yangi qatorni yaratish
+                new_line = f"🆔 {group_id_escaped}\n📛 {group_name_escaped}\n📅 {added_date_escaped}\n\n"
+                
+                # Agar yangi qator qo'shilsa, xabar juda uzun bo'lishini tekshiramiz
+                if len(groups_text) + len(new_line) > MAX_MESSAGE_LENGTH:
+                    # Joriy xabarni yuboramiz
+                    await send_current_message()
+                    
+                    # Yangi xabarni boshlaymiz (MarkdownV2 uchun "davomi" ni escape qilamiz)
+                    continuation_text = escape_markdown(" (davomi)", version=2)
+                    groups_text = all_groups_title + continuation_text + "\n\n"
+                
+                groups_text += new_line
+                groups_shown += 1
+            
+            # Qolgan guruhlar haqida ma'lumot
+            if total_groups > groups_shown:
+                more_text = get_message(user_data_uz, "more_groups", count=total_groups-groups_shown)
+                more_text_escaped = escape_markdown(more_text, version=2)
+                if len(groups_text) + len(more_text_escaped) > MAX_MESSAGE_LENGTH:
+                    # Joriy xabarni yuboramiz
+                    await send_current_message()
+                    groups_text = ""
+                groups_text += more_text_escaped
+            
+            # Oxirgi xabarni yuboramiz
+            await send_current_message()
+            
             await log_admin_action(user_id, "view_groups", "system", "none")
-            logger.debug(f"Admin groups ma'lumotlari ko'rsatildi. Admin ID: {user_id}")
+            logger.debug(f"Admin groups ma'lumotlari ko'rsatildi. Admin ID: {user_id}, Ko'rsatilgan: {groups_shown}/{total_groups}")
+            return AdminStates.MAIN_MENU
             
         elif message_text == contacts_btn_text:
             logger.debug(f"Admin contacts tugmasi bosildi. User ID: {user_id}")
-            contacts = await get_all_contacts()
-            if not contacts:
+            # JSON fayldan kontaktlarni olish
+            contacts_dict = await load_contacts_from_json()
+            if not contacts_dict:
                 await update.message.reply_text(get_message(user_data_uz, "no_contacts_found"))
                 logger.debug(f"Kontaktlar topilmadi. Admin ID: {user_id}")
                 return AdminStates.MAIN_MENU
             
             contacts_text = get_message(user_data_uz, "all_contacts_title") + "\n\n"
-            for contact in contacts[:10]:  # Faqat birinchi 10 tasini ko'rsatamiz
-                contacts_text += f"🆔 {contact[1]}\n👤 {contact[3]}\n📞 {contact[4]}\n💰 {contact[5]} so'm\n\n"
+            contacts_list = list(contacts_dict.items())[:10]  # Faqat birinchi 10 tasini ko'rsatamiz
             
-            if len(contacts) > 10:
-                contacts_text += get_message(user_data_uz, "more_contacts", count=len(contacts)-10)
+            for contact_key, contact_data in contacts_list:
+                # Faqat telefon raqamini ko'rsatamiz
+                phone_number = contact_data.get('phone_number', contact_key) if isinstance(contact_data, dict) else contact_key
+                contacts_text += f"📞 {phone_number}\n\n"
+            
+            if len(contacts_dict) > 10:
+                contacts_text += get_message(user_data_uz, "more_contacts", count=len(contacts_dict)-10)
             
             await update.message.reply_text(contacts_text, parse_mode="Markdown")
             await log_admin_action(user_id, "view_contacts", "system", "none")
