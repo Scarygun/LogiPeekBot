@@ -1,233 +1,197 @@
+import logging
 import asyncio
 from telethon import TelegramClient
-from telethon.tl.types import Message
+from telethon.errors import FloodWaitError
 from config import USER_API_ID, USER_API_HASH, USER_PHONE_NUMBER
-from database import get_all_groups
-import logging
+from database import load_groups_from_json
 import re
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class CustomTelethonClient:
     def __init__(self):
-        self.client = None
-        self.api_id = USER_API_ID
-        self.api_hash = USER_API_HASH
-        self.phone_number = USER_PHONE_NUMBER
-        self.session_name = 'logi_peek_bot_session'
-        self.is_authorized = False
-    
+        self.client = TelegramClient('user_session', USER_API_ID, USER_API_HASH)
+        self.is_authorizing = False
+
     async def connect(self):
-        if not self.api_id or not self.api_hash:
-            raise ValueError("USER_API_ID yoki USER_API_HASH topilmadi. .env faylini tekshiring.")
-        if not self.phone_number:
-            raise ValueError("USER_PHONE_NUMBER topilmadi. .env faylini tekshiring.")
-        
-        self.client = TelegramClient(self.session_name, self.api_id, self.api_hash)
-        await self.client.start(phone=self.phone_number)
-        self.is_authorized = True
-        print("Telethon client (foydalanuvchi rejimida) muvaffaqiyatli ulandi")
-        return True
-    
-    def authorized(self):
-        return self.is_authorized and self.client and self.client.is_connected()
-    
-    def is_connected(self):
-        return self.client and self.client.is_connected()
-    
-    async def search_messages(self, from_city, to_city):
-        results = []
         if not self.is_connected():
-            logger.error("Telethon client (foydalanuvchi rejimida) ulanmagan.")
-            return []
+            logger.info("Telethon client ulanmoqda...")
+            try:
+                await self.client.connect()
+                if not await self.client.is_user_authorized():
+                    logger.info("Telethon client avtorizatsiyadan o'tmagan. Kod yuborilmoqda...")
+                    await self.client.send_code_request(USER_PHONE_NUMBER)
+                    self.is_authorizing = True
+                    logger.info(f"Avtorizatsiya kodi {USER_PHONE_NUMBER} raqamiga yuborildi.")
+                    return False
+                else:
+                    logger.info("Telethon client muvaffaqiyatli ulandi va avtorizatsiyadan o'tdi.")
+                    return True
+            except Exception as e:
+                logger.error(f"Telethon client ulanishida yoki avtorizatsiyada xato: {e}")
+                self.is_authorizing = False
+                raise
+        return await self.client.is_user_authorized()
+
+    async def disconnect(self):
+        if self.is_connected():
+            logger.info("Telethon client uzilmoqda...")
+            await self.client.disconnect()
+            logger.info("Telethon client uzildi.")
+
+    def is_connected(self):
+        return self.client.is_connected()
+
+    async def verify_code(self, code):
+        if not self.is_authorizing:
+            logger.warning("Avtorizatsiya jarayoni boshlanmagan.")
+            return False
         
         try:
-            groups = await get_all_groups()
-            total_groups = len(groups)
-            logger.info(f"Qidiruv boshlandi: From '{from_city}', To '{to_city}'")
-            logger.info(f"Jami {total_groups} ta guruhda qidirilmoqda...")
-            
-            if total_groups == 0:
-                logger.warning("Ma'lumotlar bazasida guruhlar topilmadi!")
-                return []
-            
-            # Qaysi guruhlarda qidirilayotganini ko'rsatish
-            group_names = []
-            for group_entry in groups:
-                # sqlite3.Row obyekti .get() metodiga ega emas
-                try:
-                    group_name = str(group_entry['group_name']) if group_entry['group_name'] is not None else "Noma'lum"
-                except (KeyError, IndexError):
-                    group_name = "Noma'lum"
-                group_names.append(group_name)
-            logger.info(f"Qidirilayotgan guruhlar: {', '.join(group_names[:10])}{'...' if len(group_names) > 10 else ''}")
-            
-            # Manzil variantlarini yaratish (katta-kichik harf, variantlar)
-            from_city_variants = [
-                from_city.lower(),
-                from_city.upper(),
-                from_city.capitalize(),
-                from_city.title()
-            ]
-            to_city_variants = [
-                to_city.lower(),
-                to_city.upper(),
-                to_city.capitalize(),
-                to_city.title()
-            ]
-            
-            # Qidiruv so'rovlari - turli formatlarda
-            search_queries = [
-                f"{from_city}-{to_city}",
-                f"{to_city}-{from_city}",
-                f"{from_city} {to_city}",
-                f"{to_city} {from_city}",
-                f"{from_city} -> {to_city}",
-                f"{to_city} <- {from_city}",
-                f"{from_city} → {to_city}",
-                f"{to_city} ← {from_city}"
-            ]
-            
-            # Manzil variantlarini qo'shish
-            for from_var in from_city_variants:
-                for to_var in to_city_variants:
-                    if f"{from_var}-{to_var}" not in search_queries:
-                        search_queries.append(f"{from_var}-{to_var}")
-                    if f"{from_var} {to_var}" not in search_queries:
-                        search_queries.append(f"{from_var} {to_var}")
-
-            searched_groups = 0
-            for group_entry in groups:
-                group_id_raw = group_entry['group_id']
-                # sqlite3.Row obyekti .get() metodiga ega emas
-                try:
-                    group_name = str(group_entry['group_name']) if group_entry['group_name'] is not None else "Noma'lum"
-                except (KeyError, IndexError):
-                    group_name = "Noma'lum"
-                
-                # group_id ni to'g'ri formatga o'tkazish
-                group_id_str = str(group_id_raw)
-                match = re.match(r'(?:https?://)?t\.me/([a-zA-Z0-9_]+)', group_id_str)
-                if match:
-                    group_id = match.group(1)
-                else:
-                    group_id = group_id_raw
-
-                searched_groups += 1
-                logger.info(f"[{searched_groups}/{total_groups}] Guruh qidirilmoqda: {group_name} (@{group_id})")
-                
-                try:
-                    entity = await self.client.get_entity(group_id)
-                    logger.info(f"Guruh obyekti olindi: {entity.title if hasattr(entity, 'title') else group_id}")
-                    
-                    # Xabarlarni olish va matnida manzilni tekshirish
-                    found_messages = set()  # Takrorlanishni oldini olish uchun
-                    found_in_group = False
-                    
-                    # Avval Telegram search dan foydalanish
-                    for query_text in search_queries[:8]:  # Faqat asosiy so'rovlarni
-                        try:
-                            async for message in self.client.iter_messages(entity, search=query_text, limit=5):
-                                if isinstance(message, Message) and message.text and message.id not in found_messages:
-                                    found_messages.add(message.id)
-                                    found_in_group = True
-                                    
-                                    # Link yaratish
-                                    try:
-                                        if hasattr(message, 'peer_id') and message.peer_id:
-                                            if hasattr(message.peer_id, 'channel_id'):
-                                                channel_username = entity.username if hasattr(entity, 'username') else None
-                                                if channel_username:
-                                                    link = f"https://t.me/{channel_username}/{message.id}"
-                                                else:
-                                                    link = f"https://t.me/c/{abs(message.peer_id.channel_id)}/{message.id}"
-                                            else:
-                                                # Guruh bo'lsa
-                                                link = "#"
-                                        else:
-                                            link = "#"
-                                    except Exception as link_error:
-                                        logger.debug(f"Link yaratishda xatolik: {link_error}")
-                                        link = "#"
-
-                                    results.append({
-                                        'group_title': entity.title if hasattr(entity, 'title') else group_name,
-                                        'group_id': group_id,
-                                        'date': message.date.strftime('%Y-%m-%d %H:%M'),
-                                        'sender': message.sender.first_name if message.sender and hasattr(message.sender, 'first_name') else "Noma'lum",
-                                        'text': message.text,
-                                        'link': link,
-                                        'query': query_text
-                                    })
-                        except Exception as search_error:
-                            logger.debug(f"Qidiruv so'rovida xatolik ({query_text}): {search_error}")
-                            continue
-                    
-                    # Agar Telegram search natija bermasa, so'nggi xabarlarni tekshirish
-                    if not found_in_group:
-                        try:
-                            # So'nggi 50 ta xabarni olish va matnida manzilni tekshirish
-                            async for message in self.client.iter_messages(entity, limit=50):
-                                if isinstance(message, Message) and message.text and message.id not in found_messages:
-                                    message_text_lower = message.text.lower()
-                                    
-                                    # Manzil variantlarini tekshirish
-                                    from_found = any(var.lower() in message_text_lower for var in from_city_variants)
-                                    to_found = any(var.lower() in message_text_lower for var in to_city_variants)
-                                    
-                                    if from_found and to_found:
-                                        found_messages.add(message.id)
-                                        found_in_group = True
-                                        
-                                        # Link yaratish
-                                        try:
-                                            if hasattr(message, 'peer_id') and message.peer_id:
-                                                if hasattr(message.peer_id, 'channel_id'):
-                                                    channel_username = entity.username if hasattr(entity, 'username') else None
-                                                    if channel_username:
-                                                        link = f"https://t.me/{channel_username}/{message.id}"
-                                                    else:
-                                                        link = f"https://t.me/c/{abs(message.peer_id.channel_id)}/{message.id}"
-                                                else:
-                                                    link = "#"
-                                            else:
-                                                link = "#"
-                                        except Exception as link_error:
-                                            logger.debug(f"Link yaratishda xatolik: {link_error}")
-                                            link = "#"
-
-                                        results.append({
-                                            'group_title': entity.title if hasattr(entity, 'title') else group_name,
-                                            'group_id': group_id,
-                                            'date': message.date.strftime('%Y-%m-%d %H:%M'),
-                                            'sender': message.sender.first_name if message.sender and hasattr(message.sender, 'first_name') else "Noma'lum",
-                                            'text': message.text,
-                                            'link': link,
-                                            'query': f"{from_city} -> {to_city} (matn qidiruv)"
-                                        })
-                        except Exception as msg_error:
-                            logger.debug(f"Xabarlarni olishda xatolik: {msg_error}")
-                            continue
-                    
-                    if found_in_group:
-                        logger.info(f"✅ {group_name} guruhida {len([r for r in results if r.get('group_id') == group_id])} ta natija topildi")
-                    else:
-                        logger.info(f"❌ {group_name} guruhida natija topilmadi")
-                        
-                except Exception as e:
-                    logger.error(f"❌ Guruh ({group_name} - {group_id}) ichida qidirishda xatolik: {e}")
-                    continue
-            
-            logger.info(f"Qidiruv yakunlandi. Jami {len(results)} ta natija topildi.")
-            return results
+            await self.client.sign_in(USER_PHONE_NUMBER, code)
+            self.is_authorizing = False
+            logger.info("Kod tasdiqlandi. Avtorizatsiya muvaffaqiyatli.")
+            return True
         except Exception as e:
-            logger.error(f"Telethon qidiruv xatosi: {e}")
-            return []
-    
-    async def disconnect(self):
-        if self.client and self.client.is_connected():
-            await self.client.disconnect()
-            self.is_authorized = False
+            logger.error(f"Kod tasdiqlashda xato: {e}")
+            return False
 
+    def _extract_username(self, link):
+        """Linkdan username ni ajratib olish"""
+        if not link:
+            return None
+        
+        link = link.strip()
+        
+        # https://t.me/username
+        match = re.search(r'(?:https?://)?(?:www\.)?t\.me/([a-zA-Z0-9_]+)', link)
+        if match:
+            return match.group(1)
+            
+        # @username
+        if link.startswith('@'):
+            return link[1:]
+            
+        # username (faqat harflar, raqamlar va pastki chiziq)
+        if re.match(r'^[a-zA-Z0-9_]+$', link):
+            return link
+            
+        return None
+
+    async def search_messages(self, from_city, to_city, limit=20, progress_callback=None):
+        if not self.is_connected():
+            logger.error("Telethon client ulanmagan. Qidiruv amalga oshirilmaydi.")
+            return []
+
+        logger.info(f"Qidiruv boshlandi: From '{from_city}', To '{to_city}'")
+        
+        # Guruhlarni olish (groups.json dan)
+        groups = await load_groups_from_json()
+        total_groups = len(groups)
+        logger.info(f"groups.json dan {total_groups} ta guruh topildi.")
+        
+        if total_groups == 0:
+            logger.warning("Hech qanday guruh topilmadi!")
+            return []
+
+        # Dialoglarni oldindan yuklab olish va map yaratish
+        username_map = {}
+        try:
+            logger.info("Dialoglar yuklanmoqda...")
+            dialogs = await self.client.get_dialogs()
+            for d in dialogs:
+                if hasattr(d.entity, 'username') and d.entity.username:
+                    username_map[d.entity.username.lower()] = d.entity
+            logger.info(f"Dialoglar yuklandi. {len(username_map)} ta guruh/kanal xotiraga olindi.")
+        except Exception as e:
+            logger.warning(f"Dialoglarni yuklashda xatolik: {e}")
+            # Dialoglarsiz ham davom etamiz, lekin har bir guruh uchun API call bo'ladi
+
+        all_results = []
+        searched_groups = 0
+        
+        # Asosiy qidiruv so'zi
+        query = f"{from_city} {to_city}"
+
+        for group_link in groups:
+            searched_groups += 1
+            
+            # Linkdan username ni olish
+            username = self._extract_username(group_link)
+            if not username:
+                logger.warning(f"Linkdan username aniqlanmadi: {group_link}")
+                continue
+                
+            # Har 5 ta guruhdan keyin log chiqarish
+            if searched_groups % 5 == 0:
+                logger.info(f"[{searched_groups}/{total_groups}] Guruhlar tekshirildi...")
+
+            entity = None
+            actual_group_name = username
+
+            try:
+                # 1. Lokal map dan qidirish (Eng tez va xavfsiz)
+                if username.lower() in username_map:
+                    entity = username_map[username.lower()]
+                    actual_group_name = entity.title if hasattr(entity, 'title') else username
+                    # logger.info(f"✅ Guruh keshdan topildi: {username}")
+                
+                # 2. Agar lokalda yo'q bo'lsa, API orqali olish (Ehtiyotkorlik bilan)
+                else:
+                    logger.info(f"⚠️ Guruh keshda yo'q, API orqali so'ralmoqda: {username}")
+                    try:
+                        entity = await self.client.get_entity(username)
+                        actual_group_name = entity.title if hasattr(entity, 'title') else username
+                        # Muvaffaqiyatli topilsa, keyingi safar uchun map ga qo'shib qo'yamiz
+                        username_map[username.lower()] = entity
+                        # Rate limit uchun kutish
+                        await asyncio.sleep(1) 
+                    except FloodWaitError as e:
+                        logger.warning(f"❌ FloodWaitError ({username}): {e.seconds} soniya kutish kerak. O'tkazib yuboriladi.")
+                        continue
+                    except ValueError:
+                        logger.warning(f"❌ Guruh topilmadi yoki kirish imkoni yo'q: {username}")
+                        continue
+                    except Exception as e:
+                        logger.warning(f"❌ Guruhni olishda xatolik ({username}): {e}")
+                        continue
+
+                # Guruhda xabarlarni qidirish
+                if entity:
+                    try:
+                        messages = self.client.iter_messages(entity, search=query, limit=5)
+                        
+                        async for message in messages:
+                            if message.text:
+                                result = {
+                                    'group_title': actual_group_name,
+                                    'text': message.text,
+                                    'date': message.date.strftime("%Y-%m-%d %H:%M"),
+                                    'sender': 'Noma\'lum',
+                                    'link': f"https://t.me/{entity.username}/{message.id}" if hasattr(entity, 'username') and entity.username else '#'
+                                }
+                                
+                                try:
+                                    sender = await message.get_sender()
+                                    if sender:
+                                        result['sender'] = f"{sender.first_name} {sender.last_name if sender.last_name else ''}".strip()
+                                except:
+                                    pass
+                                    
+                                all_results.append(result)
+                    except Exception as e:
+                        logger.warning(f"Xabarlarni qidirishda xatolik ({username}): {e}")
+
+                # Progress callback
+                if progress_callback and (searched_groups % 20 == 0 or searched_groups == total_groups):
+                    await progress_callback(searched_groups, total_groups, all_results)
+                    
+            except Exception as e:
+                logger.warning(f"Umumiy xatolik ({username}): {e}")
+                continue
+        
+        logger.info(f"Qidiruv yakunlandi. Jami {len(all_results)} ta natija topildi.")
+        return all_results
+
+# Global client obyekti
 telethon_client = CustomTelethonClient()

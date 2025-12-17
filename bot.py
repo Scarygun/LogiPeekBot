@@ -117,15 +117,7 @@ async def start(update, context):
     reply_markup = get_main_menu_keyboard(context.user_data, get_message)
 
     await update.message.reply_text(
-        f"{get_message(context.user_data, 'bot_description_title')}\n\n"
-        f"{get_message(context.user_data, 'bot_description_line1')}\n"
-        f"{get_message(context.user_data, 'bot_username')} {get_message(context.user_data, 'welcome').split('!')[0]}!\n"
-        f"\n"
-        f"{get_message(context.user_data, 'bot_description_line2_8d')}\n"
-        f"{get_message(context.user_data, 'bot_description_line3_concert')}\n"
-        f"{get_message(context.user_data, 'bot_description_line4_slowed')}\n"
-        f"\n"
-        f"{get_message(context.user_data, 'bot_description_line5_all_in_seconds')} - {get_message(context.user_data, 'bot_username')}",
+        get_message(context.user_data, 'start_message'),
         reply_markup=reply_markup,
         parse_mode="HTML"
     )
@@ -208,9 +200,29 @@ async def post_init(application):
     init_db()
     
     # Bot ishga tushganda telethon klientini ulash
+    # Bot ishga tushganda telethon klientini ulash
     try:
-        await telethon_client.connect() # Telethon connection reinstated
-        logger.info("Telethon client muvaffaqiyatli ulandi")
+        is_authorized = await telethon_client.connect() # Telethon connection reinstated
+        
+        if not is_authorized:
+            print("\n" + "="*50)
+            print("TELETHON AVTORIZATSIYASI TALAB QILINADI")
+            print("="*50)
+            
+            # Kodni so'rash (blocking input, lekin startup paytida bu muammo emas)
+            # Async muhitda input() ishlatish uchun run_in_executor dan foydalanamiz
+            import asyncio
+            loop = asyncio.get_running_loop()
+            code = await loop.run_in_executor(None, input, "Telegramga kelgan kodni kiriting: ")
+            
+            if await telethon_client.verify_code(code):
+                logger.info("Telethon client muvaffaqiyatli ulandi va avtorizatsiyadan o'tdi")
+            else:
+                logger.error("Noto'g'ri kod kiritildi yoki avtorizatsiya xatoligi!")
+                # Dasturni to'xtatish yoki davom ettirish? 
+                # Hozircha log yozib davom etamiz, lekin funksionallik cheklangan bo'ladi
+        else:
+            logger.info("Telethon client muvaffaqiyatli ulandi")
         
         # Persistent menu tugmalarini o'rnatish
         await set_bot_commands(application)
