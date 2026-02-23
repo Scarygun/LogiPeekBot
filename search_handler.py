@@ -1,17 +1,19 @@
 import asyncio
 import logging
 from telegram import Update, Message, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ContextTypes, MessageHandler, filters, CallbackQueryHandler
+from telegram.ext import ContextTypes, MessageHandler, filters, CallbackQueryHandler, CommandHandler
 from telegram.ext import ConversationHandler
 from telegram.error import NetworkError
 from states import SearchStates
 from telethon_client import telethon_client
 from language_handler import get_message
+from keyboards import get_main_menu_keyboard, get_back_keyboard
 
 # Log konfiguratsiyasi
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 import html
+from datetime import datetime
 
 # Yuk qidirishni boshlash
 async def start_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -22,148 +24,116 @@ async def start_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return ConversationHandler.END
     
+    reply_markup = get_back_keyboard(context.user_data, get_message)
     await update.message.reply_text(
         get_message(context.user_data, "search_from_city_prompt"), 
-        parse_mode="HTML"
+        parse_mode="HTML",
+        reply_markup=reply_markup
     )
     return SearchStates.WAITING_FROM
 
 # Qayerdan qidirishni olish
 async def process_from(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    from_city = update.message.text.strip()
+    text = update.message.text.strip()
+    back_text = get_message(context.user_data, "back_button")
+    
+    if text == back_text:
+        # Bosh menyuga qaytish
+        reply_markup = get_main_menu_keyboard(context.user_data, get_message)
+        await update.message.reply_text(
+            get_message(context.user_data, "main_menu"),
+            reply_markup=reply_markup
+        )
+        return ConversationHandler.END
+
+    from_city = text
     context.user_data['from_city'] = from_city
     
+    reply_markup = get_back_keyboard(context.user_data, get_message)
     await update.message.reply_text(
         get_message(context.user_data, "search_to_city_prompt"), 
-        parse_mode="HTML"
+        parse_mode="HTML",
+        reply_markup=reply_markup
     )
     return SearchStates.WAITING_TO
 
 # Progress callback funksiyasi
 async def progress_callback(current_count, total_count, current_results, update, context, loading_msg):
-    """Har 20 guruhdan keyin topilgan yuklarni yuborish va progress xabarini yangilash"""
+    """Har 20 guruhdan keyin progress xabarini yangilash"""
     try:
         from_city = context.user_data.get('from_city', '')
         to_city = context.user_data.get('to_city', '')
         
-        # Oldingi natijalarni olamiz (takrorlanishni oldini olish uchun)
-        previous_results = context.user_data.get('previous_progress_results', [])
-        previous_result_ids = {r.get('link', '') + str(r.get('date', '')) for r in previous_results}
+        # Jami topilganlar soni
+        progress_text = f"🔍 <b>Qidirilmoqda...</b>\n\n📍 {html.escape(from_city)} ➡️ {html.escape(to_city)}\n\n📊 Jami topildi: {len(current_results)} ta yuk"
         
-        # Yangi topilgan natijalarni ajratamiz
-        new_results = []
-        for result in current_results:
-            result_id = result.get('link', '') + str(result.get('date', ''))
-            if result_id not in previous_result_ids:
-                new_results.append(result)
-        
-        # Agar yangi natijalar topilgan bo'lsa, ularni yuboramiz
-        if new_results:
-            # Oldingi natijalarni yangilaymiz
-            context.user_data['previous_progress_results'] = current_results.copy()
-            
-            # Barcha yangi natijalarni yuborish (bir nechta xabarga bo'lib, agar kerak bo'lsa)
-            MAX_MESSAGE_LENGTH = 4000  # Telegram xabar limiti 4096, xavfsizlik uchun 4000
-            current_message = f"🔍 <b>{html.escape(from_city)} ➡️ {html.escape(to_city)}</b>\n\n"
-            current_message += f"✅ <b>{len(new_results)} ta yangi yuk topildi!</b>\n\n"
-            
-            result_counter = 0
-            for result in new_results:
-                full_text = result.get('text', '')
-                display_text = full_text[:200] if len(full_text) > 200 else full_text
-                ellipsis = '...' if len(full_text) > 200 else ''
-                
-                # Har bir natija uchun matn
-                result_text = f'<b>#{result_counter + 1} {html.escape(result.get("group_title", "Noma\'lum"))}</b>\n'
-                result_text += f'📅 {html.escape(str(result.get("date", "")))} | 👤 {html.escape(result.get("sender", "Noma\'lum"))}\n'
-                result_text += f"💬 {html.escape(display_text)}{ellipsis}\n"
-                if result.get('link') and result.get('link') != '#':
-                    result_text += f"🔗 <a href=\"{result.get('link')}\">Xabarni ko'rish</a>\n"
-                result_text += "\n"
-                
-                # Agar yangi natija qo'shilsa, xabar juda uzun bo'lishini tekshiramiz
-                if len(current_message) + len(result_text) > MAX_MESSAGE_LENGTH:
-                    # Joriy xabarni yuboramiz
-                    try:
-                        await update.message.reply_text(
-                            current_message,
-                            parse_mode="HTML",
-                            disable_web_page_preview=True
-                        )
-                    except Exception as e:
-                        logger.error(f"Natijalarni yuborishda xatolik: {e}")
-                    
-                    # Yangi xabarni boshlaymiz
-                    current_message = f"🔍 <b>{html.escape(from_city)} ➡️ {html.escape(to_city)}</b> (davomi)\n\n"
-                
-                current_message += result_text
-                result_counter += 1
-            
-            # Oxirgi xabarni yuborish (agar mavjud bo'lsa)
-            if current_message.strip() and current_message.strip() != f"🔍 <b>{html.escape(from_city)} ➡️ {html.escape(to_city)}</b>\n\n":
-                try:
-                    await update.message.reply_text(
-                        current_message,
-                        parse_mode="HTML",
-                        disable_web_page_preview=True
-                    )
-                except Exception as e:
-                    logger.error(f"Natijalarni yuborishda xatolik: {e}")
-        
-        # Progress xabarini yangilash
-        progress_text = (
-            f"⏳ <b>Qidiruv davom etmoqda...</b>\n\n"
-            f"📍 {html.escape(from_city)} ➡️ {html.escape(to_city)}\n\n"
-            f"📊 Tekshirilmoqda: {current_count}/{total_count} guruh\n"
-            f"✅ Jami topildi: {len(current_results)} ta yuk"
-        )
-        
+        # Agar progress xabari allaqachon mavjud bo'lsa, uni tahrirlaymiz
         progress_message_id = context.user_data.get('progress_message_id')
         
-        # Agar progress xabari mavjud bo'lsa, uni yangilaymiz
         if progress_message_id:
             try:
-                await context.bot.edit_message_text(
-                    chat_id=update.effective_chat.id,
-                    message_id=progress_message_id,
-                    text=progress_text,
-                    parse_mode="HTML"
-                )
-            except Exception:
-                # Agar xabarni yangilab bo'lmasa, yangi xabar yuboramiz
-                context.user_data['progress_message_id'] = None
-                progress_message_id = None
-        
-        # Agar progress xabari yo'q bo'lsa, yangi yaratamiz
-        if not progress_message_id:
-            try:
-                # Loading xabarini o'chirib, progress xabarini yuboramiz
-                if loading_msg:
-                    try:
-                        await context.bot.delete_message(
-                            chat_id=update.effective_chat.id,
-                            message_id=loading_msg.message_id
-                        )
-                    except:
-                        pass
-                
-                sent_msg = await update.message.reply_text(
-                    progress_text,
-                    parse_mode="HTML"
-                )
-                context.user_data['progress_message_id'] = sent_msg.message_id
+                # Agar xabar o'zgargan bo'lsa, tahrirlaymiz (Telegram API limitini tejash uchun)
+                last_progress_text = context.user_data.get('last_progress_text', '')
+                if progress_text != last_progress_text:
+                    await context.bot.edit_message_text(
+                        chat_id=update.effective_chat.id,
+                        message_id=progress_message_id,
+                        text=progress_text,
+                        parse_mode="HTML"
+                    )
+                    context.user_data['last_progress_text'] = progress_text
             except Exception as e:
-                logger.error(f"Progress xabarini yuborishda xatolik: {e}")
+                # Agar xabar tahrirlashda xatolik bo'lsa (masalan xabar o'chirilgan), yangi xabar yuboramiz
+                # Lekin ko'p xatolik bo'lmasligi uchun pass qilamiz yoki log yozamiz
+                # logger.warning(f"Progress xabarini tahrirlashda xatolik: {e}")
+                pass
+        else:
+            # Agar loading xabari bo'lsa, uni tahrirlaymiz va progress ID qilib saqlaymiz
+            if loading_msg:
+                try:
+                    await context.bot.edit_message_text(
+                        chat_id=update.effective_chat.id,
+                        message_id=loading_msg.message_id,
+                        text=progress_text,
+                        parse_mode="HTML"
+                    )
+                    context.user_data['progress_message_id'] = loading_msg.message_id
+                    context.user_data['last_progress_text'] = progress_text
+                except Exception as e:
+                    # Agar loading xabarini ham tahrirlab bo'lmasa, yangi xabar yuboramiz
+                    try:
+                        sent_msg = await update.message.reply_text(
+                            progress_text,
+                            parse_mode="HTML"
+                        )
+                        context.user_data['progress_message_id'] = sent_msg.message_id
+                        context.user_data['last_progress_text'] = progress_text
+                    except Exception as e2:
+                        logger.error(f"Progress xabarini yuborishda xatolik: {e2}")
+
     except Exception as e:
         logger.error(f"Progress callback da xatolik: {e}")
 
 # Qayerga qidirishni olish va natijalarni ko'rsatish
 async def process_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text.strip()
+    back_text = get_message(context.user_data, "back_button")
+    
+    if text == back_text:
+        # Oldingi qadamga qaytish (WAITING_FROM)
+        reply_markup = get_back_keyboard(context.user_data, get_message)
+        await update.message.reply_text(
+            get_message(context.user_data, "search_from_city_prompt"),
+            parse_mode="HTML",
+            reply_markup=reply_markup
+        )
+        return SearchStates.WAITING_FROM
+
     # Yangi qidiruv boshida progress xabarini va oldingi natijalarni tozalaymiz
     context.user_data['progress_message_id'] = None
     context.user_data['previous_progress_results'] = []
     
-    to_city = update.message.text.strip()
+    to_city = text
     from_city = context.user_data.get('from_city', '')
     
     # Yuklash xabarini yuborish
@@ -239,7 +209,7 @@ async def process_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Natijalarni ko'rsatish funksiyasi
 async def show_search_results(update: Update, context: ContextTypes.DEFAULT_TYPE, page: int = 0):
-    """Natijalarni sahifalab ko'rsatish - bitta xabarda"""
+    """Natijalarni sahifalab ko'rsatish - ro'yxat ko'rinishida"""
     results = context.user_data.get('search_results', [])
     from_city = context.user_data.get('search_from_city', '')
     to_city = context.user_data.get('search_to_city', '')
@@ -247,132 +217,115 @@ async def show_search_results(update: Update, context: ContextTypes.DEFAULT_TYPE
     if not results:
         return
     
-    RESULTS_PER_PAGE = 100  # Har bir sahifada 100 ta natija ko'rsatish
+    RESULTS_PER_PAGE = 10  # Har bir sahifada 10 ta natija
     total_pages = (len(results) + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE
+    
+    # Sahifa chegarasini tekshirish
+    if page < 0: page = 0
+    if page >= total_pages: page = total_pages - 1
+    
     start_idx = page * RESULTS_PER_PAGE
     end_idx = min(start_idx + RESULTS_PER_PAGE, len(results))
     page_results = results[start_idx:end_idx]
     
-    # Xabar yuborish funksiyasi (callback query yoki oddiy xabar uchun)
+    # Xabar yuborish funksiyasi
     if update.callback_query:
-        send_message = update.callback_query.message.reply_text
-        edit_message = update.callback_query.message.edit_text
+        send_message = update.callback_query.message.edit_text
     else:
         send_message = update.message.reply_text
-        edit_message = None
     
-    # Telegram xabar uzunligi cheklovi (4096 belgi, xavfsizlik uchun 4000)
-    MAX_MESSAGE_LENGTH = 4000
+    # 1. Header matni
+    header = get_message(context.user_data, "search_list_header", 
+                         page=page+1, 
+                         total=total_pages, 
+                         from_city=html.escape(from_city), 
+                         to_city=html.escape(to_city),
+                         count=len(results))
     
-    # Barcha natijalarni bitta yoki bir nechta xabarda yaratish
-    messages = []  # Bir nechta xabar bo'lishi mumkin
-    current_message = ""
+    message_text = header + "\n\n"
     
-    # Sarlavha
-    header = ""
-    if page == 0 and not update.callback_query:
-        header = get_message(context.user_data, "search_results_found", count=len(results), from_city=from_city, to_city=to_city) + "\n\n"
-    else:
-        header = f"🔍 <b>{html.escape(from_city)} ➡️ {html.escape(to_city)}</b>\n"
-        header += f"📊 Jami: {len(results)} ta natija | Sahifa: {page + 1}/{total_pages}\n\n"
-    
-    current_message = header
-    
-    # Natijalarni qo'shish
-    for i, result in enumerate(page_results, start=start_idx + 1):
-        full_text = result['text']
-        display_text = full_text[:150]  # Qisqartirildi (100 ta natija uchun)
-        ellipsis = '...' if len(full_text) > 150 else ''
+    # 2. Ro'yxatni shakllantirish
+    for i, result in enumerate(page_results):
+        actual_idx = start_idx + i + 1
+        # Qisqacha nom (guruh nomi yoki birinchi qator)
+        group_title = result.get('group_title', 'Noma\'lum')
+        # Agar group_title juda uzun bo'lsa qisqartirish
+        if len(group_title) > 20:
+             group_title = group_title[:20] + "..."
+             
+        full_text = result.get('text', '')
+        # Matnni qisqartirish (masalan 100 belgi)
+        snippet = full_text[:100].replace('\n', ' ')
+        if len(full_text) > 100:
+            snippet += "..."
+             
+        item_text = get_message(context.user_data, "search_result_item_list", 
+                                idx=actual_idx, 
+                                title=html.escape(group_title),
+                                text=html.escape(snippet))
+        message_text += item_text + "\n\n"
         
-        result_text = f"<b>#{i} {html.escape(result['group_title'])}</b>\n"
-        result_text += f"📅 {html.escape(str(result['date']))} | 👤 {html.escape(result['sender'])}\n"
-        result_text += f"💬 {html.escape(display_text)}{ellipsis}\n"
-        if result.get('link') and result.get('link') != '#':
-            result_text += f"🔗 <a href=\"{result['link']}\">Xabarni ko'rish</a>\n"
-        result_text += "\n"
-        
-        # Agar yangi natija qo'shilsa, xabar juda uzun bo'lishini tekshiramiz
-        if len(current_message) + len(result_text) > MAX_MESSAGE_LENGTH:
-            # Joriy xabarni saqlaymiz
-            messages.append(current_message)
-            # Yangi xabarni boshlaymiz (sarlavhasiz)
-            current_message = f"🔍 <b>{html.escape(from_city)} ➡️ {html.escape(to_city)}</b> (davomi)\n\n"
-        
-        current_message += result_text
-    
-    # Oxirgi xabarni qo'shamiz
-    if current_message.strip() and current_message.strip() != header.strip():
-        messages.append(current_message)
-    
-    # Agar hech qanday xabar yaratilmagan bo'lsa, kamida sarlavhani yuboramiz
-    if not messages:
-        messages.append(header + "📋 Natijalar topilmadi yoki xabar yaratib bo'lmadi.")
-    
-    # Inline button tugmalarini yaratish
+    message_text += f"\n{html.escape(str(datetime.now().strftime('%H:%M')))}" # Vaqtni qo'shish (ixtiyoriy)
+
+    # 3. Tugmalarni yaratish
     keyboard = []
     
-    # Navigation tugmalar - faqat "Oldingi" va "Keyingi"
+    # Raqamli tugmalar (1-10)
+    # 5 tadan 2 qator
+    row1 = []
+    row2 = []
+    
+    for i in range(len(page_results)):
+        actual_idx = start_idx + i 
+        btn_text = str(actual_idx + 1)
+        callback_data = f"search_view_{actual_idx}"
+        if i < 5:
+            row1.append(InlineKeyboardButton(btn_text, callback_data=callback_data))
+        else:
+            row2.append(InlineKeyboardButton(btn_text, callback_data=callback_data))
+            
+    if row1: keyboard.append(row1)
+    if row2: keyboard.append(row2)
+    
+    # Navigatsiya va Bosh menyu tugmalari (bitta qatorda)
     nav_row = []
     
-    # Oldingi tugmasi (agar birinchi sahifa bo'lmasa)
+    # Bosh menyu tugmasi (Chapda)
+    menu_text = get_message(context.user_data, "main_menu_button")
+    nav_row.append(InlineKeyboardButton(menu_text, callback_data="search_menu"))
+    
+    # Oldingi (O'rtada, agar bor bo'lsa)
     if page > 0:
-        nav_row.append(InlineKeyboardButton("◀️ Oldingi", callback_data=f"search_page_{page-1}"))
-    
-    # Keyingi tugmasi (agar oxirgi sahifa bo'lmasa)
+        nav_text = get_message(context.user_data, "prev_button")
+        nav_row.append(InlineKeyboardButton(nav_text, callback_data=f"search_page_{page-1}"))
+        
+    # Keyingi (O'ngda, agar bor bo'lsa)
     if page < total_pages - 1:
-        nav_row.append(InlineKeyboardButton("Keyingi ▶️", callback_data=f"search_page_{page+1}"))
+        nav_text = get_message(context.user_data, "next_button")
+        nav_row.append(InlineKeyboardButton(nav_text, callback_data=f"search_page_{page+1}"))
+        
+    keyboard.append(nav_row)
     
-    if nav_row:
-        keyboard.append(nav_row)
+    reply_markup = InlineKeyboardMarkup(keyboard)
     
-    reply_markup = InlineKeyboardMarkup(keyboard) if keyboard else None
-    
-    # Xabarlarni yuborish yoki yangilash
     try:
-        if update.callback_query and edit_message:
-            # Callback query bo'lsa, birinchi xabarni yangilash
-            if messages:
-                await edit_message(
-                    text=messages[0],
-                    parse_mode="HTML",
-                    disable_web_page_preview=True,
-                    reply_markup=reply_markup
-                )
-                # Qolgan xabarlarni alohida yuborish
-                for msg in messages[1:]:
-                    try:
-                        await send_message(
-                            text=msg,
-                            parse_mode="HTML",
-                            disable_web_page_preview=True
-                        )
-                    except Exception as e:
-                        logger.error(f"Qo'shimcha xabar yuborishda xatolik: {e}")
-        else:
-            # Yangi xabarlarni yuborish
-            for i, msg in enumerate(messages):
-                # Birinchi xabarga tugmalarni qo'shamiz
-                markup = reply_markup if i == 0 else None
-                try:
-                    await send_message(
-                        text=msg,
-                        parse_mode="HTML",
-                        disable_web_page_preview=True,
-                        reply_markup=markup
-                    )
-                except Exception as e:
-                    logger.error(f"Xabar yuborishda xatolik: {e}")
+        await send_message(
+            message_text,
+            reply_markup=reply_markup,
+            parse_mode="HTML"
+        )
     except Exception as e:
-        logger.error(f"Xabar yuborishda xatolik: {e}")
-        # Fallback - oddiy matn
-        try:
-            await send_message(
-                f"🔍 {from_city} ➡️ {to_city}\n\n" + 
-                "\n".join([f"#{i+1} {r['group_title']}" for i, r in enumerate(page_results[:50])]),  # 50 tagacha ko'rsatish
-                reply_markup=reply_markup
-            )
-        except Exception as fallback_err:
-            logger.error(f"Fallback xabar yuborishda xatolik: {fallback_err}")
+        logger.error(f"Natijalarni ko'rsatishda xatolik: {e}")
+        # Agar edit_text o'xshamasa (masalan xabar o'zgarmagan bo'lsa), yangi xabar yuborishga urinib ko'ramiz
+        if update.callback_query:
+             try:
+                await update.callback_query.message.reply_text(
+                    message_text,
+                    reply_markup=reply_markup,
+                    parse_mode="HTML"
+                )
+             except Exception as e2:
+                 logger.error(f"Qayta yuborishda xatolik: {e2}")
 
 # Callback query handler - sahifa o'zgartirish va natijani ko'rish
 async def handle_search_page_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -408,6 +361,25 @@ async def handle_search_page_callback(update: Update, context: ContextTypes.DEFA
             except (NetworkError, Exception) as err:
                 logger.warning(f"Xatolik xabarini yuborib bo'lmadi: {err}")
     
+    elif callback_data == "search_menu":
+        # Bosh menyuga qaytish va search contextni tozalash
+        await query.message.delete() # Xabarni o'chirish
+        # Contextni tozalash
+        context.user_data.pop('search_results', None)
+        context.user_data.pop('search_from_city', None)
+        context.user_data.pop('search_to_city', None)
+        context.user_data.pop('search_page', None)
+        
+        # Main menu ni ko'rsatish
+        user_lang = context.user_data.get('language', 'uz')
+        main_menu_markup = get_main_menu_keyboard({'language': user_lang}, get_message)
+        
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=get_message(context.user_data, "main_menu"),
+            reply_markup=main_menu_markup
+        )
+
     elif callback_data.startswith("search_view_"):
         try:
             result_idx_str = callback_data.replace("search_view_", "")
@@ -421,16 +393,30 @@ async def handle_search_page_callback(update: Update, context: ContextTypes.DEFA
                 full_text = result['text']
                 
                 # To'liq natijani ko'rsatish
-                detail_message = f"<b>#{result_idx + 1} {html.escape(result['group_title'])}</b>\n\n"
-                detail_message += f"📅 <b>Sana:</b> {html.escape(str(result['date']))}\n"
-                detail_message += f"👤 <b>Yuboruvchi:</b> {html.escape(result['sender'])}\n\n"
-                detail_message += f"💬 <b>Xabar:</b>\n{html.escape(full_text)}\n\n"
-                detail_message += f"🔗 <a href=\"{result['link']}\">Xabarni ko'rish</a>"
+                header = get_message(context.user_data, "search_details_header",
+                                    idx=result_idx + 1,
+                                    title=html.escape(result.get('group_title', 'Noma\'lum')),
+                                    date=html.escape(str(result.get('date', ''))),
+                                    sender=html.escape(result.get('sender', '')))
                 
-                await query.message.reply_text(
+                detail_message = header
+                detail_message += f"💬 {html.escape(full_text)}\n\n"
+                if result.get('link') and result.get('link') != '#':
+                    detail_message += f"🔗 <a href=\"{result['link']}\">Xabarni ko'rish</a>"
+                
+                # Orqaga qaytish tugmasi
+                back_button_text = get_message(context.user_data, "back_to_list")
+                # Hozirgi sahifani aniqlash
+                current_page = context.user_data.get('search_page', 0)
+                reply_markup = InlineKeyboardMarkup([[
+                    InlineKeyboardButton(back_button_text, callback_data=f"search_page_{current_page}")
+                ]])
+                
+                await query.message.edit_text(
                     detail_message,
                     parse_mode="HTML",
-                    disable_web_page_preview=True
+                    disable_web_page_preview=True,
+                    reply_markup=reply_markup
                 )
             else:
                 try:
@@ -458,7 +444,8 @@ def get_search_conversation_handler():
             MessageHandler(
                 filters.Regex(f"^({get_message({'language': 'uz'}, 'search_load')}|{get_message({'language': 'ru'}, 'search_load')})$"), 
                 start_search
-            )
+            ),
+            CommandHandler("search", start_search)
         ],
         states={
             SearchStates.WAITING_FROM: [MessageHandler(filters.TEXT & ~filters.COMMAND, process_from)],

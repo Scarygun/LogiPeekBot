@@ -1,24 +1,25 @@
 import logging
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
-from telegram.ext import ContextTypes, CommandHandler, ConversationHandler, MessageHandler, filters
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
+from telegram.ext import ContextTypes, CommandHandler, ConversationHandler, MessageHandler, filters, CallbackQueryHandler
 from config import ADMINS
-from database import get_all_groups, get_all_contacts, get_group_count, get_contact_count, log_admin_action, get_all_feedback, get_user_count_from_json, get_group_count_from_json, get_contact_count_from_json, load_contacts_from_json # Yangilangan importlar
+from config import ADMINS
+from database import get_all_groups, get_all_contacts, get_group_count, get_contact_count, log_admin_action, get_all_feedback, get_user_count_from_json, get_group_count_from_json, get_contact_count_from_json, load_contacts_from_json, load_groups_from_json # Yangilangan importlar
 from language_handler import get_message
-from keyboards import get_main_menu_keyboard
+from keyboards import get_main_menu_keyboard, get_back_keyboard
 import re # Yangi import
-from broadcast_handler import start_broadcast, BroadcastStates # Yangi import
+from config import ADMINS
+from datetime import datetime
 
+import html # Yangi import
 logger = logging.getLogger(__name__)
 
 def get_admin_main_menu_keyboard():
     # Admin paneli uchun faqat O'zbek tilidagi tugmalar
     user_data_uz = {'language': 'uz'}
     keyboard = [
-        [get_message(user_data_uz, "stats_button"), get_message(user_data_uz, "groups_button")],
-        [get_message(user_data_uz, "contacts_button"), get_message(user_data_uz, "add_balance_button")],
-        [get_message(user_data_uz, "close_button")],
-        [get_message(user_data_uz, "feedback_list_button")],
-        [get_message(user_data_uz, "broadcast_message_button")]
+        [get_message(user_data_uz, "groups_button"), get_message(user_data_uz, "contacts_button")],
+        [get_message(user_data_uz, "add_balance_button"), get_message(user_data_uz, "feedback_list_button")],
+        [get_message(user_data_uz, "back_button")]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
 
@@ -45,7 +46,16 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return ConversationHandler.END
     
     reply_markup = get_admin_main_menu_keyboard() # Faqat O'zbek tilida
-    await update.message.reply_text(get_message({'language': 'uz'}, "admin_panel_welcome"), reply_markup=reply_markup, parse_mode="Markdown")
+    
+    # HTML taglarni olib tashlaymiz va Markdown bold qilamiz
+    welcome_msg = get_message({'language': 'uz'}, "admin_panel_welcome").replace("<b>", "").replace("</b>", "")
+    # "Admin-panel" qismini bold qilish (bu yerda qattiq kodlangan, lekin textdan qidirish ham mumkin)
+    if "Admin-panel" in welcome_msg:
+        welcome_msg = welcome_msg.replace("Admin-panel", "*Admin-panel*")
+    elif "Admin panel" in welcome_msg: # O'zbekcha variant
+        welcome_msg = welcome_msg.replace("Admin panel", "*Admin panel*")
+        
+    await update.message.reply_text(welcome_msg, reply_markup=reply_markup, parse_mode="Markdown")
     
     await log_admin_action(user_id, "open_admin_panel", "system", "none")
     logger.debug(f"Admin panel MAIN_MENU holatiga qaytmoqda. User ID: {user_id}. Return state: {AdminStates.MAIN_MENU}")
@@ -60,21 +70,20 @@ async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
     user_data_uz = {'language': 'uz'}
     
     # Har bir tugma matnini logga chiqarish
-    stats_btn_text = get_message(user_data_uz, "stats_button").strip()
+
     groups_btn_text = get_message(user_data_uz, "groups_button").strip()
     contacts_btn_text = get_message(user_data_uz, "contacts_button").strip()
     add_balance_btn_text = get_message(user_data_uz, "add_balance_button").strip()
     close_btn_text = get_message(user_data_uz, "close_button").strip()
     feedback_list_btn_text = get_message(user_data_uz, "feedback_list_button").strip()
-    broadcast_message_btn_text = get_message(user_data_uz, "broadcast_message_button").strip()
     
-    logger.debug(f"Expected Stats Button: '{stats_btn_text}'")
+
     logger.debug(f"Expected Groups Button: '{groups_btn_text}'")
     logger.debug(f"Expected Contacts Button: '{contacts_btn_text}'")
     logger.debug(f"Expected Add Balance Button: '{add_balance_btn_text}'")
     logger.debug(f"Expected Close Button: '{close_btn_text}'")
     logger.debug(f"Expected Feedback List Button: '{feedback_list_btn_text}'")
-    logger.debug(f"Expected Broadcast Message Button: '{broadcast_message_btn_text}'")
+
     logger.debug(f"Received Message Text: '{message_text}' (length: {len(message_text)})")
     
     if not is_admin(user_id):
@@ -84,124 +93,21 @@ async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
     
     try:
         # Matnlarni to'g'ri taqqoslash
-        if message_text == stats_btn_text:
-            logger.debug(f"Admin stats tugmasi bosildi. User ID: {user_id}")
-            group_count = await get_group_count_from_json() # JSON faylidan guruhlar sonini olish
-            contact_count = await get_contact_count_from_json() # JSON faylidan kontaktlar sonini olish
-            
-            total_users_json = await get_user_count_from_json() # JSON faylidan foydalanuvchilar sonini olish
-            
-            await update.message.reply_text(
-                get_message(user_data_uz, "bot_stats_title") + "\n\n" +
-                get_message(user_data_uz, "total_bot_users", count=total_users_json) + "\n" +
-                get_message(user_data_uz, "group_count", count=group_count) + "\n" +
-                get_message(user_data_uz, "contact_count", count=contact_count) + "\n" +
-                get_message(user_data_uz, "last_update"),
-                parse_mode="Markdown"
-            )
-            await log_admin_action(user_id, "view_stats", "system", "none")
-            return AdminStates.MAIN_MENU
-            
-        elif message_text == groups_btn_text:
+        if message_text == groups_btn_text:
             logger.debug(f"Admin groups tugmasi bosildi. User ID: {user_id}")
-            groups = await get_all_groups()
+            groups = await load_groups_from_json()
             if not groups:
                 await update.message.reply_text(get_message(user_data_uz, "no_groups_found"))
                 logger.debug(f"Guruhlar topilmadi. Admin ID: {user_id}")
                 return AdminStates.MAIN_MENU
             
-            from telegram.helpers import escape_markdown
+            # Guruhlar ro'yxatini context da saqlaymiz
+            context.user_data['admin_groups'] = groups
             
-            # Telegram xabar maksimal uzunligi 4096 belgi
-            MAX_MESSAGE_LENGTH = 3000  # Xavfsizlik uchun biroz kamroq (escape qilingan matnlar uzunroq bo'lishi mumkin)
-            MAX_GROUPS_TO_SHOW = 50  # Maksimal ko'rsatiladigan guruhlar soni
-            
-            # Sarlavhani escape qilamiz
-            all_groups_title = escape_markdown(get_message(user_data_uz, "all_groups_title"), version=2)
-            groups_text = all_groups_title + "\n\n"
-            groups_shown = 0
-            total_groups = len(groups)
-            
-            # Birinchi xabarni yuborish funksiyasi
-            async def send_current_message():
-                nonlocal groups_text
-                if groups_text.strip() and groups_text.strip() != all_groups_title + "\n\n":
-                    try:
-                        # Xabar uzunligini tekshiramiz
-                        if len(groups_text) > 4096:
-                            # Xabarni qisqartiramiz
-                            groups_text = groups_text[:4000] + "\n\n... (xabar juda uzun, qisqartirildi)"
-                        await update.message.reply_text(groups_text, parse_mode="MarkdownV2")
-                        groups_text = ""  # Xabarni yuborilgandan keyin tozalaymiz
-                    except Exception as e:
-                        logger.error(f"Xabar yuborishda xatolik: {e}")
-                        # Xabar juda uzun bo'lsa, uni qisqartiramiz
-                        if "too long" in str(e).lower():
-                            # Xabarni yarmiga qisqartiramiz
-                            half_length = len(groups_text) // 2
-                            groups_text = groups_text[:half_length] + "\n\n... (xabar juda uzun, qisqartirildi)"
-                            try:
-                                await update.message.reply_text(groups_text, parse_mode="MarkdownV2")
-                                groups_text = ""
-                            except:
-                                pass
-            
-            for idx, group in enumerate(groups):
-                # Maksimal ko'rsatiladigan guruhlar sonini tekshiramiz
-                if groups_shown >= MAX_GROUPS_TO_SHOW:
-                    break
-                
-                # sqlite3.Row obyekti .get() metodiga ega emas, shuning uchun to'g'ridan-to'g'ri indekslash ishlatamiz
-                try:
-                    group_id = str(group['group_id'])
-                    # None tekshiruvi - agar None bo'lsa, default qiymat ishlatamiz
-                    group_name = str(group['group_name']) if group['group_name'] is not None else "Noma'lum"
-                    added_date = str(group['added_date']) if group['added_date'] is not None else "Noma'lum"
-                except (KeyError, IndexError, TypeError) as e:
-                    logger.warning(f"Guruh ma'lumotlarini olishda xatolik: {e}")
-                    # Fallback qiymatlar
-                    try:
-                        group_id = str(group['group_id']) if 'group_id' in group.keys() else "Noma'lum"
-                    except:
-                        group_id = "Noma'lum"
-                    group_name = "Noma'lum"
-                    added_date = "Noma'lum"
-                
-                # MarkdownV2 uchun maxsus belgilarni escape qilish
-                group_id_escaped = escape_markdown(group_id, version=2)
-                group_name_escaped = escape_markdown(group_name, version=2)
-                added_date_escaped = escape_markdown(added_date, version=2)
-                
-                # Yangi qatorni yaratish
-                new_line = f"🆔 {group_id_escaped}\n📛 {group_name_escaped}\n📅 {added_date_escaped}\n\n"
-                
-                # Agar yangi qator qo'shilsa, xabar juda uzun bo'lishini tekshiramiz
-                if len(groups_text) + len(new_line) > MAX_MESSAGE_LENGTH:
-                    # Joriy xabarni yuboramiz
-                    await send_current_message()
-                    
-                    # Yangi xabarni boshlaymiz (MarkdownV2 uchun "davomi" ni escape qilamiz)
-                    continuation_text = escape_markdown(" (davomi)", version=2)
-                    groups_text = all_groups_title + continuation_text + "\n\n"
-                
-                groups_text += new_line
-                groups_shown += 1
-            
-            # Qolgan guruhlar haqida ma'lumot
-            if total_groups > groups_shown:
-                more_text = get_message(user_data_uz, "more_groups", count=total_groups-groups_shown)
-                more_text_escaped = escape_markdown(more_text, version=2)
-                if len(groups_text) + len(more_text_escaped) > MAX_MESSAGE_LENGTH:
-                    # Joriy xabarni yuboramiz
-                    await send_current_message()
-                    groups_text = ""
-                groups_text += more_text_escaped
-            
-            # Oxirgi xabarni yuboramiz
-            await send_current_message()
+            # Birinchi sahifani ko'rsatamiz
+            await show_admin_groups(update, context, page=0)
             
             await log_admin_action(user_id, "view_groups", "system", "none")
-            logger.debug(f"Admin groups ma'lumotlari ko'rsatildi. Admin ID: {user_id}, Ko'rsatilgan: {groups_shown}/{total_groups}")
             return AdminStates.MAIN_MENU
             
         elif message_text == contacts_btn_text:
@@ -213,34 +119,30 @@ async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
                 logger.debug(f"Kontaktlar topilmadi. Admin ID: {user_id}")
                 return AdminStates.MAIN_MENU
             
-            contacts_text = get_message(user_data_uz, "all_contacts_title") + "\n\n"
-            contacts_list = list(contacts_dict.items())[:10]  # Faqat birinchi 10 tasini ko'rsatamiz
+            # Kontaktlarni context da saqlaymiz
+            context.user_data['admin_contacts'] = contacts_dict
             
-            for contact_key, contact_data in contacts_list:
-                # Faqat telefon raqamini ko'rsatamiz
-                phone_number = contact_data.get('phone_number', contact_key) if isinstance(contact_data, dict) else contact_key
-                contacts_text += f"📞 {phone_number}\n\n"
+            # Birinchi sahifani ko'rsatamiz
+            await show_admin_contacts(update, context, page=0)
             
-            if len(contacts_dict) > 10:
-                contacts_text += get_message(user_data_uz, "more_contacts", count=len(contacts_dict)-10)
-            
-            await update.message.reply_text(contacts_text, parse_mode="Markdown")
             await log_admin_action(user_id, "view_contacts", "system", "none")
             logger.debug(f"Admin contacts ma'lumotlari ko'rsatildi. Admin ID: {user_id}")
             
         elif message_text == add_balance_btn_text:
             logger.debug(f"Admin add_balance tugmasi bosildi. User ID: {user_id}")
+            reply_markup = get_back_keyboard(user_data_uz, get_message)
             await update.message.reply_text(
                 get_message(user_data_uz, "add_balance_title") + "\n\n" +
                 get_message(user_data_uz, "add_balance_format"),
-                parse_mode="Markdown"
+                parse_mode="Markdown",
+                reply_markup=reply_markup
             )
             logger.debug(f"Admin ADD_BALANCE holatiga o'tmoqda. Admin ID: {user_id}")
             return AdminStates.ADD_BALANCE
             
-        elif message_text == close_btn_text:
-            logger.debug(f"Admin close tugmasi bosildi. User ID: {user_id}")
-            await update.message.reply_text(get_message(user_data_uz, "admin_panel_close"))
+        elif message_text == close_btn_text or message_text == get_message(user_data_uz, "back_button").strip():
+            logger.debug(f"Admin close/back tugmasi bosildi. User ID: {user_id}")
+            # await update.message.reply_text(get_message(user_data_uz, "admin_panel_close")) # "Yopildi" xabari shart emas, chunki menyu chiqadi
             await log_admin_action(user_id, "close_admin_panel", "system", "none")
             
             # Asosiy menyuga qaytish
@@ -266,10 +168,6 @@ async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
             await update.message.reply_text(message_text, parse_mode="Markdown")
             return AdminStates.MAIN_MENU
             
-        elif message_text == broadcast_message_btn_text:
-            logger.debug(f"Admin broadcast tugmasi bosildi. User ID: {user_id}. Broadcast suhbatini boshlamoqda.")
-            return await start_broadcast(update, context)
-
         logger.warning(f"Noma'lum xabar ('{message_text}') admin panelda. User ID: {user_id}")
         return AdminStates.MAIN_MENU
     except Exception as e:
@@ -286,6 +184,19 @@ async def add_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not is_admin(user_id):
         await update.message.reply_text(get_message(context.user_data, "admin_not_authorized"))
         return ConversationHandler.END
+
+    # Back button handling
+    user_data_uz = {'language': 'uz'}
+    back_text = get_message(user_data_uz, "back_button")
+    
+    if message_text == back_text:
+        reply_markup = get_admin_main_menu_keyboard()
+        await update.message.reply_text(
+            get_message(user_data_uz, "admin_panel_welcome"),
+            reply_markup=reply_markup,
+            parse_mode="Markdown"
+        )
+        return AdminStates.MAIN_MENU
     
     try:
         if ':' not in message_text:
@@ -326,6 +237,248 @@ async def add_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return AdminStates.MAIN_MENU
 
 # Admin conversation handler yaratish
+async def show_admin_groups(update: Update, context: ContextTypes.DEFAULT_TYPE, page: int = 0):
+    """Guruhlarni sahifalab ko'rsatish"""
+    # Xabarni o'chirishga harakat qilamiz (eski xabarni tozalash uchun)
+    if update.callback_query:
+        try:
+            # Callback bo'lsa, xabarni tahrirlaymiz
+            pass 
+        except:
+            pass
+            
+    user_id = update.effective_user.id
+    groups = context.user_data.get('admin_groups', [])
+    
+    if not groups:
+        return
+    
+    RESULTS_PER_PAGE = 10
+    total_pages = (len(groups) + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE
+    
+    if page < 0: page = 0
+    if page >= total_pages: page = total_pages - 1
+    
+    start_idx = page * RESULTS_PER_PAGE
+    end_idx = min(start_idx + RESULTS_PER_PAGE, len(groups))
+    page_groups = groups[start_idx:end_idx]
+    
+    # Header
+    # "Jami topildi: {count} ta natija"
+    header = f"Sahifa {page + 1} / {total_pages}\n\nJami topildi: {len(groups)} ta natija\n\n"
+    
+    # HTML uchun escape qilish shart emas, chunki biz o'zimiz html taglarini qo'shamiz
+    # Lekin user inputini escape qilish kerak (hozircha user inputi yo'q, faqat json data)
+    
+    message_text = header
+    
+    # Ro'yxat
+    for i, group_link in enumerate(page_groups):
+        actual_idx = start_idx + i + 1
+        group_link = str(group_link)
+        
+        # Linkni optimallashtirish: Native Telegram formatiga o'tish
+        # Foydalanuvchi "shuni shunday kuchirib yuborish" dedi, ya'ni linkni ochiq ko'rinishda yozish
+        # Bu eng ishonchli usul.
+        
+        display_text = ""
+        
+        # Agar oddiy username linki bo'lsa (joinchat yoki + bo'lmasa)
+        if "t.me/" in group_link and "joinchat" not in group_link and "+" not in group_link:
+            username_match = re.search(r't\.me/([a-zA-Z0-9_]+)', group_link)
+            if username_match:
+                username = username_match.group(1)
+                display_text = f"@{username}"
+            else:
+                 display_text = group_link
+        else:
+            display_text = group_link
+            
+        # HTML taglarini escape qilish (xavfsizlik uchun)
+        # Linkni o'zini escape qilmaymiz, chunki Telegram o'zi topadi (agar HTML parse_mode ishlatilmasa)
+        # Lekin biz HTML ishlatayapmiz, shuning uchun biroz ehtiyot bo'lish kerak.
+        # Agar parse_mode=HTML bo'lsa, @username va linklar avtomatik ishlamasligi mumkin agar <a> ichida bo'lmasa.
+        # Lekin Telegram HTML mode da ham oddiy linklarni taniydi.
+        
+        # Eng ishonchli variant: <a href="link">@username</a> shaklida emas, shunchaki text.
+        # Lekin biz HTML mode ishlatayapmiz.
+        # Agar biz linkni ochiq yozsak: https://t.me/... Telegram buni link deb biladi.
+        
+        display_safe = html.escape(display_text)
+        
+        # Format: 1.) 🌍 @username | 🇺🇿 | LOGISTICA 🌍
+        row_text = f"🌍 {display_safe} | 🇺🇿 | LOGISTICA 🌍"
+        
+        item_text = f"{actual_idx}.) {row_text}\n"
+        message_text += item_text
+        
+    message_text += f"\n<i>{datetime.now().strftime('%H:%M')}</i>"
+
+    # Tugmalar
+    keyboard = []
+    
+    nav_row = []
+    nav_row.append(InlineKeyboardButton("🏠 Bosh menyu", callback_data="admin_groups_menu"))
+    
+    if page > 0:
+        nav_row.append(InlineKeyboardButton("⬅️ Oldingi", callback_data=f"admin_groups_page_{page-1}"))
+    if page < total_pages - 1:
+        nav_row.append(InlineKeyboardButton("Keyingi ➡️", callback_data=f"admin_groups_page_{page+1}"))
+        
+    keyboard.append(nav_row)
+    
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    if update.callback_query:
+        await update.callback_query.message.edit_text(message_text, reply_markup=reply_markup, parse_mode="HTML", disable_web_page_preview=True)
+    else:
+        await update.message.reply_text(message_text, reply_markup=reply_markup, parse_mode="HTML", disable_web_page_preview=True)
+
+async def admin_groups_pagination_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    
+    data = query.data
+    
+    if data == "admin_groups_menu":
+        # Bosh menyuga qaytish
+        # Xabarni o'chirish yoki tahrirlash
+        try:
+            await query.message.delete()
+        except:
+            pass
+            
+        # Yangi menyu xabarini yuborish
+        reply_markup = get_admin_main_menu_keyboard()
+        
+        # HTML taglarni olib tashlaymiz va Markdown bold qilamiz
+        welcome_msg = get_message({'language': 'uz'}, "admin_panel_welcome").replace("<b>", "").replace("</b>", "")
+        if "Admin-panel" in welcome_msg:
+             welcome_msg = welcome_msg.replace("Admin-panel", "*Admin-panel*")
+        elif "Admin panel" in welcome_msg:
+             welcome_msg = welcome_msg.replace("Admin panel", "*Admin panel*")
+             
+        await query.message.reply_text(
+            welcome_msg,
+            reply_markup=reply_markup,
+            parse_mode="Markdown"
+        )
+        return AdminStates.MAIN_MENU
+        
+    elif data.startswith("admin_groups_page_"):
+        page = int(data.split("_")[-1])
+        await show_admin_groups(update, context, page=page)
+        return AdminStates.MAIN_MENU
+
+async def show_admin_contacts(update: Update, context: ContextTypes.DEFAULT_TYPE, page: int = 0):
+    """Kontaktlarni sahifalab ko'rsatish"""
+    # Xabarni o'chirishga harakat qilamiz (eski xabarni tozalash uchun)
+    if update.callback_query:
+        try:
+            # Callback bo'lsa, xabarni tahrirlaymiz
+            pass 
+        except:
+            pass
+            
+    user_id = update.effective_user.id
+    
+    # Kontaktlar dict formatida
+    contacts_dict = context.user_data.get('admin_contacts', {})
+    
+    # Listga o'tkazish
+    contacts_list = []
+    if isinstance(contacts_dict, dict):
+        for key, value in contacts_dict.items():
+            phone = key
+            if isinstance(value, dict):
+                phone = value.get('phone_number', key)
+            contacts_list.append(phone)
+            
+    if not contacts_list:
+        return
+    
+    RESULTS_PER_PAGE = 10
+    total_pages = (len(contacts_list) + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE
+    
+    if page < 0: page = 0
+    if page >= total_pages: page = total_pages - 1
+    
+    start_idx = page * RESULTS_PER_PAGE
+    end_idx = min(start_idx + RESULTS_PER_PAGE, len(contacts_list))
+    page_contacts = contacts_list[start_idx:end_idx]
+    
+    # Header
+    header = f"Sahifa {page + 1} / {total_pages}\n\nJami topildi: {len(contacts_list)} ta natija\n\n"
+    
+    message_text = header
+    
+    # Ro'yxat
+    for i, contact in enumerate(page_contacts):
+        actual_idx = start_idx + i + 1
+        contact = str(contact)
+        
+        # Native format: shunchaki text
+        # Format: 1. +998901234567
+        item_text = f"{actual_idx}. {contact}\n"
+        message_text += item_text
+        
+    message_text += f"\n{datetime.now().strftime('%H:%M')}"
+
+    # Tugmalar
+    keyboard = []
+    
+    nav_row = []
+    nav_row.append(InlineKeyboardButton("🏠 Bosh menyu", callback_data="admin_contacts_menu"))
+    
+    if page > 0:
+        nav_row.append(InlineKeyboardButton("⬅️ Oldingi", callback_data=f"admin_contacts_page_{page-1}"))
+    if page < total_pages - 1:
+        nav_row.append(InlineKeyboardButton("Keyingi ➡️", callback_data=f"admin_contacts_page_{page+1}"))
+        
+    keyboard.append(nav_row)
+    
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    # parse_mode=None (Default)
+    if update.callback_query:
+        await update.callback_query.message.edit_text(message_text, reply_markup=reply_markup, disable_web_page_preview=True)
+    else:
+        await update.message.reply_text(message_text, reply_markup=reply_markup, disable_web_page_preview=True)
+
+async def admin_contacts_pagination_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    
+    data = query.data
+    
+    if data == "admin_contacts_menu":
+        # Bosh menyuga qaytish
+        try:
+            await query.message.delete()
+        except:
+            pass
+            
+        reply_markup = get_admin_main_menu_keyboard()
+        # HTML taglarni olib tashlaymiz
+        welcome_msg = get_message({'language': 'uz'}, "admin_panel_welcome").replace("<b>", "").replace("</b>", "")
+        if "Admin-panel" in welcome_msg:
+             welcome_msg = welcome_msg.replace("Admin-panel", "*Admin-panel*")
+        elif "Admin panel" in welcome_msg:
+             welcome_msg = welcome_msg.replace("Admin panel", "*Admin panel*")
+             
+        await query.message.reply_text(
+            welcome_msg,
+            reply_markup=reply_markup,
+            parse_mode="Markdown"
+        )
+        return AdminStates.MAIN_MENU
+        
+    elif data.startswith("admin_contacts_page_"):
+        page = int(data.split("_")[-1])
+        await show_admin_contacts(update, context, page=page)
+        return AdminStates.MAIN_MENU
+
+# Admin conversation handler yaratish
 def get_admin_conversation_handler():
     logger.debug("Admin ConversationHandler yaratilmoqda...")
     return ConversationHandler(
@@ -333,14 +486,15 @@ def get_admin_conversation_handler():
         states={
             AdminStates.MAIN_MENU: [
                 MessageHandler(filters.Text([
-                    get_message({'language': 'uz'}, "stats_button").strip(),
                     get_message({'language': 'uz'}, "groups_button").strip(),
                     get_message({'language': 'uz'}, "contacts_button").strip(),
                     get_message({'language': 'uz'}, "add_balance_button").strip(),
                     get_message({'language': 'uz'}, "close_button").strip(),
-                    get_message({'language': 'uz'}, "feedback_list_button").strip(),
-                    get_message({'language': 'uz'}, "broadcast_message_button").strip()
-                ]), admin_message_handler)
+                    get_message({'language': 'uz'}, "back_button").strip(), # Added Back button
+                    get_message({'language': 'uz'}, "feedback_list_button").strip()
+                ]), admin_message_handler),
+                CallbackQueryHandler(admin_groups_pagination_handler, pattern="^admin_groups_"),
+                CallbackQueryHandler(admin_contacts_pagination_handler, pattern="^admin_contacts_")
             ],
             AdminStates.ADD_BALANCE: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_balance)],
         },

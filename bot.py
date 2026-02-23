@@ -33,11 +33,12 @@ from contact_handler import get_contact_conversation_handler
 from admin_handler import get_admin_conversation_handler
 from telethon_client import telethon_client
 from feedback_handler import get_feedback_conversation_handler
-from database import init_db, add_group, remove_group, get_all_groups, add_user_to_json, get_user_count_from_json, get_group_count_from_json # Yangilangan importlar
+from help_handler import get_help_conversation_handler, handle_admin_reply
+from database import init_db, add_group as db_add_group, remove_group as db_remove_group, get_all_groups as db_get_all_groups, add_user_to_json, get_user_count_from_json, get_group_count_from_json # Yangilangan importlar
 from config import USER_API_ID, USER_API_HASH
 from menu import set_bot_commands
 from language_handler import get_message, get_language_conversation_handler, LanguageStates, start_language_selection
-from broadcast_handler import get_broadcast_conversation_handler, stop_broadcast_command # Olib tashlandi
+
 from keyboards import get_main_menu_keyboard # Yangi import
 # from datetime import datetime # Yangi import
 
@@ -53,13 +54,13 @@ from keyboards import get_main_menu_keyboard # Yangi import
 # conn.commit()
 
 async def add_group(chat_id: int, title: Optional[str]): # Changed str | None to Optional[str]
-    await add_group(chat_id, title) # database.py dagi funksiyani chaqirish
+    await db_add_group(chat_id, title) # database.py dagi funksiyani chaqirish
 
 async def remove_group(chat_id: int):
-    await remove_group(chat_id) # database.py dagi funksiyani chaqirish
+    await db_remove_group(chat_id) # database.py dagi funksiyani chaqirish
 
 async def get_all_groups():
-    return await get_all_groups() # database.py dagi funksiyani chaqirish
+    return await db_get_all_groups() # database.py dagi funksiyani chaqirish
 
 # --- Google Sheets setup (qolgan qismi database.py ga ko'chirildi) ---
 # Google Sheets client
@@ -125,25 +126,7 @@ async def start(update, context):
 async def help_command(update, context):
     await update.message.reply_text(get_message(context.user_data, "help_message"))
 
-async def stats_command(update, context):
-    user_language = context.user_data.get('language', 'uz')
-    
-    total_users_json = await get_user_count_from_json() # JSON faylidan foydalanuvchilar sonini olish
 
-    # Guruhlar sonini JSON fayldan olish
-    group_count = await get_group_count_from_json()
-
-    # Kontaktlar sonini olish (agar tegishli funksiya mavjud bo'lsa, hozircha 0)
-    contact_count = 0 # Hozircha nol, keyinchalik o'zgartirilishi mumkin
-
-    # Statistik xabarini shakllantirish
-    message_text = get_message(context.user_data, "bot_stats_title") + "\n\n"
-    message_text += get_message(context.user_data, "total_bot_users", count=total_users_json) + "\n"
-    message_text += get_message(context.user_data, "group_count", count=group_count) + "\n"
-    message_text += get_message(context.user_data, "contact_count", count=contact_count) + "\n"
-    message_text += get_message(context.user_data, "last_update")
-
-    await update.message.reply_text(message_text, parse_mode="HTML")
 
 async def check_balance(update, context):
     # Balans tekshirish funksiyasi
@@ -151,15 +134,25 @@ async def check_balance(update, context):
         get_message(context.user_data, "balance_check_title") + "\n\n" +
         get_message(context.user_data, "current_balance", balance=0) + "\n\n" +
         get_message(context.user_data, "contact_admin"),
-        parse_mode="Markdown"
+        parse_mode="HTML"
     )
 
 async def on_chat_member_update(update, context):
-    # Bu handler bot status o'zgarganda chaqiriladi (python-telegram-bot versiyasi)
-    chat_member = update.chat_member
+    # Bu handler bot status o'zgarganda chaqiriladi
+    chat_member = update.my_chat_member
+    if not chat_member:
+        chat_member = update.chat_member
+        
+    if not chat_member:
+        logger.warning("Chat member update received but no chat_member found.")
+        return
+
     chat_id = chat_member.chat.id
     chat_title = chat_member.chat.title
     
+    logger.info(f"Chat Member Update: Chat ID: {chat_id}, Title: {chat_title}")
+    print(f"DEBUG: Chat ID: {chat_id}, Title: {chat_title}") # For immediate terminal visibility
+
     # Botning o'zgarishini aniqlaymiz
     if chat_member.new_chat_member.user.id == context.bot.id:
         new_status = chat_member.new_chat_member.status
@@ -171,28 +164,7 @@ async def on_chat_member_update(update, context):
             await remove_group(chat_id)
             logger.info(f"Guruh o'chirildi: {chat_id}")
 
-async def broadcast_command(update, context):
-    if update.effective_user.id != OWNER_ID:
-        await update.message.reply_text("Sizda ruxsat yo'q.")
-        return
 
-    args = context.args
-    if not args:
-        await update.message.reply_text("Foydalanish: /broadcast XABAR matni")
-        return
-
-    text = " ".join(args)
-    groups = await get_all_groups()
-    sent = 0
-    failed = 0
-    for chat_id in groups:
-        try:
-            await context.bot.send_message(chat_id=chat_id, text=text)
-            sent += 1
-        except Exception as e:
-            failed += 1
-            logger.error(f"Xato {chat_id}: {e}")
-    await update.message.reply_text(f"Yuborildi: {sent}, xatoliklar: {failed}.")
 
 
 async def post_init(application):
@@ -215,8 +187,20 @@ async def post_init(application):
             loop = asyncio.get_running_loop()
             code = await loop.run_in_executor(None, input, "Telegramga kelgan kodni kiriting: ")
             
-            if await telethon_client.verify_code(code):
+            verification_result = await telethon_client.verify_code(code)
+            
+            if verification_result == True:
                 logger.info("Telethon client muvaffaqiyatli ulandi va avtorizatsiyadan o'tdi")
+            elif verification_result == "password_required":
+                print("\n" + "="*50)
+                print("IKKI BOSQICHLI TEKSHIRUV (2FA) PAROLI TALAB QILINADI")
+                print("="*50)
+                password = await loop.run_in_executor(None, input, "Telegram parolini kiriting: ")
+                
+                if await telethon_client.verify_password(password):
+                    logger.info("Telethon client muvaffaqiyatli ulandi va avtorizatsiyadan o'tdi")
+                else:
+                    logger.error("Noto'g'ri parol kiritildi!")
             else:
                 logger.error("Noto'g'ri kod kiritildi yoki avtorizatsiya xatoligi!")
                 # Dasturni to'xtatish yoki davom ettirish? 
@@ -227,6 +211,35 @@ async def post_init(application):
         # Persistent menu tugmalarini o'rnatish
         await set_bot_commands(application)
         logger.info("Persistent bot commands set.")
+
+        # Bot description ni o'rnatish
+        description_text = """🚀 @logi_peek_bot — yuk topish uchun aqlli yordamchi!
+
+Bu bot sizga logistika ishlarini tez, qulay va ishonchli bajarishda yordam beradi:
+
+🔍 Tez yuk qidirish
+— Kerakli yuklarni bir necha soniyada toping
+
+👥 Kontakt va guruhlar bilan ishlash
+— Yuk egalari va haydovchilar bilan to‘g‘ridan-to‘g‘ri aloqa
+
+💰 Balansni boshqarish
+— Balansni tekshirish va oson to‘ldirish
+
+👉 Botni ishga tushirish uchun Boshlash tugmasini bosing."""
+        
+        try:
+            # Default (til tanlanmagan yoki boshqa tillar uchun)
+            await application.bot.set_my_description(description_text)
+            
+            # Aniq tillar uchun ham o'rnatish
+            await application.bot.set_my_description(description_text, language_code='uz')
+            await application.bot.set_my_description(description_text, language_code='ru')
+            await application.bot.set_my_description(description_text, language_code='en')
+            
+            logger.info("Bot description set successfully for multiple languages.")
+        except Exception as e:
+            logger.error(f"Failed to set bot description: {e}")
 
     except Exception as e:
         logger.error(f"Bot initialization error: {e}")
@@ -258,21 +271,22 @@ def main():
     # Handlerlarni qo'shish
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("balance", check_balance))
-    application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(CommandHandler("stats", stats_command)) # Yangi handler qo'shish
+    # application.add_handler(CommandHandler("help", help_command)) # help_handler ga o'tkazildi
+    # stats_command olib tashlandi
     application.add_handler(get_search_conversation_handler())
     # Search sahifa o'zgartirish va natijani ko'rish uchun callback query handler
     from search_handler import handle_search_page_callback
     application.add_handler(CallbackQueryHandler(handle_search_page_callback, pattern="^search_"))
     application.add_handler(get_group_conversation_handler())
     application.add_handler(get_contact_conversation_handler())
-    application.add_handler(get_broadcast_conversation_handler())
+
     application.add_handler(get_admin_conversation_handler())
     application.add_handler(get_feedback_conversation_handler())
+    application.add_handler(get_help_conversation_handler()) # Qayta tiklandi
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_admin_reply)) # Admin javobini ushlash uchun
     application.add_handler(get_language_conversation_handler())
     application.add_handler(ChatMemberHandler(on_chat_member_update, ChatMemberHandler.MY_CHAT_MEMBER))
-    application.add_handler(CommandHandler("broadcast", broadcast_command))
-    application.add_handler(CommandHandler("stop_broadcast", stop_broadcast_command))
+
     
     # Til tanlash uchun yangi CommandHandler
     # application.add_handler(CommandHandler("language", start_language_selection))
@@ -280,7 +294,16 @@ def main():
     # Balans tekshirish uchun handler
     balance_button_uz = get_message({'language': 'uz'}, "check_balance")
     balance_button_ru = get_message({'language': 'ru'}, "check_balance")
-    application.add_handler(MessageHandler(filters.Regex(f"^({balance_button_uz}|{balance_button_ru})$"), check_balance))
+    balance_button_en = get_message({'language': 'en'}, "check_balance")
+    application.add_handler(MessageHandler(filters.Regex(f"^({balance_button_uz}|{balance_button_ru}|{balance_button_en})$"), check_balance))
+    
+    # Statistika tugmasi olib tashlandi
+
+    # Yordam tugmasi uchun handler (endi help_handler orqali ishlaydi)
+    # help_button_uz = get_message({'language': 'uz'}, "help_button")
+    # help_button_ru = get_message({'language': 'ru'}, "help_button")
+    # help_button_en = get_message({'language': 'en'}, "help_button")
+    # application.add_handler(MessageHandler(filters.Regex(f"^({help_button_uz}|{help_button_ru}|{help_button_en})$"), help_command))
     # application.add_handler(MessageHandler(filters.Regex(f"^({get_message({}, 'select_language_button', lang='uz')}|{get_message({}, 'select_language_button', lang='ru')})$"), start_language_selection))
     
     # Botni ishga tushirish

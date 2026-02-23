@@ -1,9 +1,10 @@
 import re
 import logging
 from telegram import Update
-from telegram.ext import ContextTypes, ConversationHandler, MessageHandler, filters
+from telegram.ext import ContextTypes, ConversationHandler, MessageHandler, filters, CommandHandler
 from database import add_group
 from language_handler import get_message
+from keyboards import get_main_menu_keyboard, get_back_keyboard
 from telegram.helpers import escape_markdown
 
 logger = logging.getLogger(__name__)
@@ -14,15 +15,29 @@ class GroupStates:
 
 # Gruh qo'shishni boshlash
 async def start_add_group(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    reply_markup = get_back_keyboard(context.user_data, get_message)
     await update.message.reply_text(
         get_message(context.user_data, "group_add_start"),
-        parse_mode="Markdown"
+        parse_mode="Markdown",
+        reply_markup=reply_markup
     )
     return GroupStates.WAITING_GROUP
 
 # Gruh ma'lumotlarini qayta ishlash
 async def process_group(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    group_info = update.message.text.strip()
+    text = update.message.text.strip()
+    back_text = get_message(context.user_data, "back_button")
+    
+    if text == back_text:
+        # Bosh menyuga qaytish
+        reply_markup = get_main_menu_keyboard(context.user_data, get_message)
+        await update.message.reply_text(
+            get_message(context.user_data, "main_menu"),
+            reply_markup=reply_markup
+        )
+        return ConversationHandler.END
+
+    group_info = text
     
     # Guruh ma'lumotlarini tahlil qilish
     group_id = group_info
@@ -109,7 +124,8 @@ def get_group_conversation_handler():
             MessageHandler(
                 filters.Regex(f"^({get_message({'language': 'uz'}, 'add_group')}|{get_message({'language': 'ru'}, 'add_group')})$"), 
                 start_add_group
-            )
+            ),
+            CommandHandler("add_group", start_add_group)
         ],
         states={
             GroupStates.WAITING_GROUP: [MessageHandler(filters.TEXT & ~filters.COMMAND, process_group)],

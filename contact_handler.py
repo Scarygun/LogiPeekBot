@@ -1,8 +1,9 @@
 import logging
 from telegram import Update
-from telegram.ext import ContextTypes, ConversationHandler, MessageHandler, filters
+from telegram.ext import ContextTypes, ConversationHandler, MessageHandler, filters, CommandHandler
 from database import add_contact # database modulini import qilamiz
 from language_handler import get_message
+from keyboards import get_main_menu_keyboard, get_back_keyboard
 
 logger = logging.getLogger(__name__)
 
@@ -12,16 +13,30 @@ class ContactStates:
 
 # Kontakt qo'shishni boshlash
 async def start_add_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    reply_markup = get_back_keyboard(context.user_data, get_message)
     await update.message.reply_text(
         get_message(context.user_data, "contact_add_start"),
-        parse_mode="Markdown"
+        parse_mode="Markdown",
+        reply_markup=reply_markup
     )
     return ContactStates.WAITING_CONTACT
 
 # Kontakt ma'lumotlarini qayta ishlash
 async def process_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
     import re
-    contact_info = update.message.text.strip()
+    text = update.message.text.strip()
+    back_text = get_message(context.user_data, "back_button")
+    
+    if text == back_text:
+        # Bosh menyuga qaytish
+        reply_markup = get_main_menu_keyboard(context.user_data, get_message)
+        await update.message.reply_text(
+            get_message(context.user_data, "main_menu"),
+            reply_markup=reply_markup
+        )
+        return ConversationHandler.END
+
+    contact_info = text
     user_id = str(update.effective_user.id) # Kontakt qo'shayotgan foydalanuvchining ID si
     
     # Telefon raqamini ajratib olish
@@ -66,7 +81,8 @@ def get_contact_conversation_handler():
             MessageHandler(
                 filters.Regex(f"^({get_message({'language': 'uz'}, 'add_contact')}|{get_message({'language': 'ru'}, 'add_contact')})$"), 
                 start_add_contact
-            )
+            ),
+            CommandHandler("add_contact", start_add_contact)
         ],
         states={
             ContactStates.WAITING_CONTACT: [MessageHandler(filters.TEXT & ~filters.COMMAND, process_contact)],

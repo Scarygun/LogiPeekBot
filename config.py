@@ -1,26 +1,29 @@
-# config.py
 import os
 
 # Adminlar ro'yxati
-ADMINS = [API]
+ADMINS = [8093402925]
 
-# Bot egasining ID raqami (xabar tarqatish uchun)
-OWNER_ID = API # O'zingizning Telegram ID'ingizni qo'ying
+# Bot egasining ID raqami
+OWNER_ID = 8093402925 
 
-# Ma'lumotlar bazasi nomi
+# Ma'lumotlar bazasi va fayl nomlari
 DATABASE_NAME = 'bot_data.db'
-USERS_JSON_FILE = 'users.json' # Yangi qo'shildi: Foydalanuvchi ma'lumotlarini saqlash uchun JSON fayli
-GROUPS_JSON_FILE = 'groups.json' # Guruhlarni saqlash uchun JSON fayli
-CONTACTS_JSON_FILE = 'contacts.json' # Kontaktlarni saqlash uchun JSON fayli
-ACTIVE_GROUPS_JSON_FILE = 'active_groups.json' # Muvaffaqiyatli guruhlar ro'yxati
+USERS_JSON_FILE = 'users.json'
+GROUPS_JSON_FILE = 'groups.json'
+CONTACTS_JSON_FILE = 'contacts.json'
+ACTIVE_GROUPS_JSON_FILE = 'active_groups.json'
 
-# Bot tokeni (to‘g‘ridan-to‘g‘ri yozilgan)
-BOT_TOKEN = 'TOKEN'
+# Bot tokeni
+BOT_TOKEN = '8310919266:AAElBVKq80dsgorAXx_4rad08hJXx1jGX4c'
 
 # Foydalanuvchi Telethon sozlamalari
-USER_API_ID = 
-USER_API_HASH = '----'
-USER_PHONE_NUMBER = 'Nomer' # Telethon foydalanuvchi hisobi uchun telefon raqami
+# DIQQAT: API_ID odatda faqat raqam bo'ladi, API_HASH esa uzun kod.
+USER_API_ID = 26813019  # Bu yerga my.telegram.org dan olingan raqamli ID ni yozing
+USER_API_HASH = 'c4590c3e2164e40785b8f6000a427a6a' # Bu yerga uzun hash kodni yozing
+USER_PHONE_NUMBER = '+998915555390' 
 
 # Log fayli sozlamalari
-LOG_FILE_NAME = 'bot_activity.log' # Bot loglarini saqlash uchun fayl nomi
+LOG_FILE_NAME = 'bot_activity.log'
+
+# Yordam so'rovlari uchun guruh IDsi
+SUPPORT_GROUP_ID = -5155317107

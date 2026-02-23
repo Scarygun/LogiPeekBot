@@ -251,9 +251,10 @@ def _load_groups_from_json_sync():
     try:
         with open(GROUPS_JSON_FILE, 'r', encoding='utf-8') as f:
             data = json.load(f)
-            # Agar array bo'lsa, to'g'ridan-to'g'ri qaytarish
+            # Agar array bo'lsa, har bir linkni strip qilib qaytarish
             if isinstance(data, list):
-                return data
+                # Faqat string bo'lganlarini va bo'sh bo'lmaganlarini olamiz
+                return [link.strip() for link in data if isinstance(link, str) and link.strip()]
             # Agar dict bo'lsa, eski formatdan yangi formatga o'tkazish
             if isinstance(data, dict):
                 links = []

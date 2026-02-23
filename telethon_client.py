@@ -1,7 +1,7 @@
 import logging
 import asyncio
 from telethon import TelegramClient
-from telethon.errors import FloodWaitError
+from telethon.errors import FloodWaitError, SessionPasswordNeededError
 from config import USER_API_ID, USER_API_HASH, USER_PHONE_NUMBER
 from database import load_groups_from_json
 import re
@@ -52,8 +52,27 @@ class CustomTelethonClient:
             self.is_authorizing = False
             logger.info("Kod tasdiqlandi. Avtorizatsiya muvaffaqiyatli.")
             return True
+        except SessionPasswordNeededError:
+            logger.warning("Ikki bosqichli tekshiruv (2FA) yoqilgan. Parol talab qilinadi.")
+            return "password_required"
         except Exception as e:
             logger.error(f"Kod tasdiqlashda xato: {e}")
+            return False
+
+    async def verify_password(self, password):
+        if not self.is_authorizing:
+             # Agar kod kiritilgandan keyin "password_required" qaytgan bo'lsa, 
+             # is_authorizing hali ham True bo'lishi mumkin yoki biz uni qayta True qilishimiz kerak bo'ladi.
+             # Lekin sign_in(code) dan keyin sessiya yarim-avtorizatsiya holatida bo'ladi.
+             pass
+
+        try:
+            await self.client.sign_in(password=password)
+            self.is_authorizing = False
+            logger.info("Parol tasdiqlandi. Avtorizatsiya muvaffaqiyatli.")
+            return True
+        except Exception as e:
+            logger.error(f"Parol tasdiqlashda xato: {e}")
             return False
 
     def _extract_username(self, link):
@@ -112,6 +131,9 @@ class CustomTelethonClient:
         
         # Asosiy qidiruv so'zi
         query = f"{from_city} {to_city}"
+        
+        # Takrorlanishlarni oldini olish uchun to'plam
+        seen_texts = set()
 
         for group_link in groups:
             searched_groups += 1
@@ -159,26 +181,73 @@ class CustomTelethonClient:
                 # Guruhda xabarlarni qidirish
                 if entity:
                     try:
-                        messages = self.client.iter_messages(entity, search=query, limit=5)
+                        # Limitni oshiramiz, chunki keyin filtrlaymiz
+                        messages = self.client.iter_messages(entity, search=query, limit=20)
                         
                         async for message in messages:
                             if message.text:
-                                result = {
-                                    'group_title': actual_group_name,
-                                    'text': message.text,
-                                    'date': message.date.strftime("%Y-%m-%d %H:%M"),
-                                    'sender': 'Noma\'lum',
-                                    'link': f"https://t.me/{entity.username}/{message.id}" if hasattr(entity, 'username') and entity.username else '#'
-                                }
+                                # Xabarni bloklarga bo'lish (digest xabarlar uchun)
+                                # Odatda yuklar orasida bo'sh qator tashlanadi
+                                blocks = [b.strip() for b in message.text.split('\n\n') if b.strip()]
                                 
-                                try:
-                                    sender = await message.get_sender()
-                                    if sender:
-                                        result['sender'] = f"{sender.first_name} {sender.last_name if sender.last_name else ''}".strip()
-                                except:
-                                    pass
-                                    
-                                all_results.append(result)
+                                # Agar bo'sh qatorsiz yozilgan bo'lsa, butun matn bitta blok bo'ladi
+                                if not blocks:
+                                    blocks = [message.text]
+
+                                for block in blocks:
+                                    text_lower = block.lower()
+                                    from_lower = from_city.lower()
+                                    to_lower = to_city.lower()
+
+                                    # 1-bosqich: Blokda ikkala shahar ham bormi?
+                                    if from_lower in text_lower and to_lower in text_lower:
+                                        
+                                        # 2-bosqich: Ichki qatorlarni tekshirish (Single-line digest list protection)
+                                        # Agar biror qatorda IKKALA shahar ham bo'lsa, demak bu ro'yxat bo'lishi mumkin
+                                        # Va biz faqat o'sha qatorlarni olishimiz kerak.
+                                        lines = block.split('\n')
+                                        matching_lines = []
+                                        has_perfect_line_match = False
+                                        
+                                        for line in lines:
+                                            line_lower = line.lower()
+                                            if from_lower in line_lower and to_lower in line_lower:
+                                                matching_lines.append(line.strip())
+                                                has_perfect_line_match = True
+                                        
+                                        final_text = ""
+                                        
+                                        if has_perfect_line_match:
+                                            # Agar aniq mos keluvchi qatorlar topilgan bo'lsa, faqat ularni olamiz
+                                            # (Bu "Toshkent Samarqand\nToshkent Farg'ona" kabi holatlar uchun)
+                                            final_text = "\n".join(matching_lines)
+                                        else:
+                                            # Agar birorta ham qatorda ikkalasi birdan topilmasa
+                                            # (Masalan: "Toshkentdan\nFarg'onaga"), unda butun blokni olamiz
+                                            final_text = block
+                                        
+                                        if final_text:
+                                            # Deduplikatsiya: Agar bu matn oldin uchragan bo'lsa, uni o'tkazib yuboramiz
+                                            if final_text in seen_texts:
+                                                continue
+                                            seen_texts.add(final_text)
+
+                                            result = {
+                                                'group_title': actual_group_name,
+                                                'text': final_text,
+                                                'date': message.date.strftime("%Y-%m-%d %H:%M"),
+                                                'sender': 'Noma\'lum',
+                                                'link': f"https://t.me/{entity.username}/{message.id}" if hasattr(entity, 'username') and entity.username else '#'
+                                            }
+                                            
+                                            try:
+                                                sender = await message.get_sender()
+                                                if sender:
+                                                    result['sender'] = f"{sender.first_name} {sender.last_name if sender.last_name else ''}".strip()
+                                            except:
+                                                pass
+                                                
+                                            all_results.append(result)
                     except Exception as e:
                         logger.warning(f"Xabarlarni qidirishda xatolik ({username}): {e}")
 
