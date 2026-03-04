@@ -14,7 +14,7 @@ CONTACTS_JSON_FILE = 'contacts.json'
 ACTIVE_GROUPS_JSON_FILE = 'active_groups.json'
 
 # Bot tokeni
-BOT_TOKEN = '8468044431:AAGjyIqE-iMkBokmXQuDF2mAAdDnUSnKIdU'
+BOT_TOKEN = '8321048668:AAHVU1ITY_uatfMuHZ9cubuHtboufiTAj_k'
 
 # Foydalanuvchi Telethon sozlamalari
 # DIQQAT: API_ID odatda faqat raqam bo'ladi, API_HASH esa uzun kod.
