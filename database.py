@@ -87,8 +87,10 @@ async def save_users_to_json(users: dict):
 async def add_user_to_json(user_id: int, username: Optional[str]):
     users = await load_users_from_json()
     if str(user_id) not in users:
+        link = f"https://t.me/{username}" if username else f"tg://user?id={user_id}"
         users[str(user_id)] = {
             'username': username,
+            'profile_link': link,
             'added_date': datetime.now().isoformat()
         }
         await save_users_to_json(users)

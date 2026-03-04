@@ -1,21 +1,25 @@
 #!/bin/bash
 
-echo "Bot jarayonlari qidirilmoqda..."
+echo "Bot jarayonlarini tozalash boshlandi..."
 
-# 1. Yumshoq to'xtatish (SIGTERM)
-pkill -f "bot.py"
+# 1. Barcha python bot jarayonlarini o'chirish (majburiy)
+pkill -9 -f "bot.py"
+pkill -9 -f "python3 bot.py"
+pkill -9 -f "python bot.py"
+pkill -9 -f "venv/bin/python bot.py"
+ps aux | grep "bot.py" | grep -v grep | awk '{print $2}' | xargs kill -9 2>/dev/null
 
-# Biroz kutish
+# 1 soniya kutish
 sleep 1
 
-# 2. Agar hali ham ishlab turgan bo'lsa, majburiy to'xtatish (SIGKILL)
-# pgrep -f "bot.py" jarayon IDlarini qaytaradi
+# 2. Tozalanganini tekshirish
 PIDS=$(pgrep -f "bot.py")
 
 if [ -n "$PIDS" ]; then
-    echo "⚠️ Ba'zi jarayonlar to'xtamadi. Majburiy o'chirilmoqda (kill -9)..."
-    echo "$PIDS" | xargs kill -9
-    echo "✅ Bot majburiy to'xtatildi."
+    echo "⚠️ Ba'zi jarayonlar hali ham o'chmadi ($PIDS). Iltimos, kompyuterni qayta ishga tushiring yoki qo'lda kill qiling."
 else
-    echo "✅ Bot muvaffaqiyatli to'xtatildi."
+    # 3. Loglarni tozalash (ixtiyoriy, muammolarni aniq ko'rish uchun)
+    # rm -f bot_output.log bot_activity.log
+    echo "✅ MacBook bot jarayonlaridan to'liq tozalandi."
+    echo "Endi 'python bot.py' komandasi bilan botni xavfsiz ishga tushirishingiz mumkin."
 fi

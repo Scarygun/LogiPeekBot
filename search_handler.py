@@ -1,4 +1,5 @@
 import asyncio
+import re
 import logging
 from telegram import Update, Message, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, MessageHandler, filters, CallbackQueryHandler, CommandHandler
@@ -179,6 +180,13 @@ async def process_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
             
             # Birinchi 10 ta natijani ko'rsatish
             await show_search_results(update, context, page=0)
+            
+            # Asosiy menyuni ko'rsatamiz (ReplyKeyboardMarkup)
+            reply_markup = get_main_menu_keyboard(context.user_data, get_message)
+            await update.message.reply_text(
+                get_message(context.user_data, "main_menu"),
+                reply_markup=reply_markup
+            )
         else:
             await update.message.reply_text(
                 get_message(context.user_data, "search_no_results", from_city=from_city, to_city=to_city),
@@ -439,6 +447,11 @@ async def handle_search_page_callback(update: Update, context: ContextTypes.DEFA
 
 # Conversation handler yaratish
 def get_search_conversation_handler():
+    from keyboards import get_all_menu_buttons
+    all_buttons = get_all_menu_buttons(get_message)
+    btn_pattern = "|".join([re.escape(b) for b in all_buttons])
+    buttons_regex = f"^({btn_pattern})$"
+    
     return ConversationHandler(
         entry_points=[
             MessageHandler(
@@ -448,8 +461,8 @@ def get_search_conversation_handler():
             CommandHandler("search", start_search)
         ],
         states={
-            SearchStates.WAITING_FROM: [MessageHandler(filters.TEXT & ~filters.COMMAND, process_from)],
-            SearchStates.WAITING_TO: [MessageHandler(filters.TEXT & ~filters.COMMAND, process_to)],
+            SearchStates.WAITING_FROM: [MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex(buttons_regex), process_from)],
+            SearchStates.WAITING_TO: [MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex(buttons_regex), process_to)],
         },
         fallbacks=[] # Fallbacks olib tashlandi
     )

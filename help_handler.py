@@ -71,12 +71,24 @@ async def help_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
         
     except Exception as e:
         logger.error(f"Help xabarini forward qilishda xatolik: {e}", exc_info=True)
-        await update.message.reply_text("Xatolik yuz berdi. Iltimos keyinroq urinib ko'ring.")
+        if "Chat not found" in str(e):
+            await update.message.reply_text(
+                "⚠️ <b>Xatolik:</b> Support guruhi topilmadi.\n\n"
+                "Iltimos, bot admini bilan bog'laning yoki guruh ID raqamini tekshiring.",
+                parse_mode='HTML'
+            )
+        else:
+            await update.message.reply_text("Xatolik yuz berdi. Iltimos keyinroq urinib ko'ring.")
         return HELP_TEXT
 
     return HELP_TEXT
 
 def get_help_conversation_handler() -> ConversationHandler:
+    from keyboards import get_all_menu_buttons
+    all_buttons = get_all_menu_buttons(get_message)
+    btn_pattern = "|".join([re.escape(b) for b in all_buttons])
+    buttons_regex = f"^({btn_pattern})$"
+    
     return ConversationHandler(
         entry_points=[
             MessageHandler(
@@ -86,7 +98,7 @@ def get_help_conversation_handler() -> ConversationHandler:
             CommandHandler("help", help_start),
         ],
         states={
-            HELP_TEXT: [MessageHandler(filters.TEXT & ~filters.COMMAND, help_received)]
+            HELP_TEXT: [MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex(buttons_regex), help_received)]
         },
         fallbacks=[]
     )

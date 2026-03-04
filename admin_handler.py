@@ -3,7 +3,7 @@ from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboard
 from telegram.ext import ContextTypes, CommandHandler, ConversationHandler, MessageHandler, filters, CallbackQueryHandler
 from config import ADMINS
 from config import ADMINS
-from database import get_all_groups, get_all_contacts, get_group_count, get_contact_count, log_admin_action, get_all_feedback, get_user_count_from_json, get_group_count_from_json, get_contact_count_from_json, load_contacts_from_json, load_groups_from_json # Yangilangan importlar
+from database import get_all_groups, get_all_contacts, get_group_count, get_contact_count, log_admin_action, get_all_feedback, get_user_count_from_json, get_group_count_from_json, get_contact_count_from_json, load_contacts_from_json, load_groups_from_json, load_users_from_json # Yangilangan importlar
 from language_handler import get_message
 from keyboards import get_main_menu_keyboard, get_back_keyboard
 import re # Yangi import
@@ -19,7 +19,7 @@ def get_admin_main_menu_keyboard():
     keyboard = [
         [get_message(user_data_uz, "groups_button"), get_message(user_data_uz, "contacts_button")],
         [get_message(user_data_uz, "add_balance_button"), get_message(user_data_uz, "feedback_list_button")],
-        [get_message(user_data_uz, "back_button")]
+        [get_message(user_data_uz, "users_count_button"), get_message(user_data_uz, "back_button")]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
 
@@ -49,7 +49,7 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # HTML taglarni olib tashlaymiz va Markdown bold qilamiz
     welcome_msg = get_message({'language': 'uz'}, "admin_panel_welcome").replace("<b>", "").replace("</b>", "")
-    # "Admin-panel" qismini bold qilish (bu yerda qattiq kodlangan, lekin textdan qidirish ham mumkin)
+    # "Admin-panel" qismini bold qilish
     if "Admin-panel" in welcome_msg:
         welcome_msg = welcome_msg.replace("Admin-panel", "*Admin-panel*")
     elif "Admin panel" in welcome_msg: # O'zbekcha variant
@@ -76,6 +76,7 @@ async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
     add_balance_btn_text = get_message(user_data_uz, "add_balance_button").strip()
     close_btn_text = get_message(user_data_uz, "close_button").strip()
     feedback_list_btn_text = get_message(user_data_uz, "feedback_list_button").strip()
+    users_count_btn_text = get_message(user_data_uz, "users_count_button").strip()
     
 
     logger.debug(f"Expected Groups Button: '{groups_btn_text}'")
@@ -166,6 +167,28 @@ async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
                 message_text += f"{i+1}. User ID: {feedback['user_id']}\n   Fikr: {feedback['feedback_text']}\n   Vaqt: {feedback['timestamp']}\n\n"
             
             await update.message.reply_text(message_text, parse_mode="Markdown")
+            return AdminStates.MAIN_MENU
+            
+        elif message_text == users_count_btn_text:
+            logger.debug(f"Admin users count tugmasi bosildi. User ID: {user_id}")
+            users = await load_users_from_json()
+            contacts = await load_contacts_from_json()
+            groups = await load_groups_from_json()
+            
+            users_count = len(users)
+            contacts_count = len(contacts)
+            groups_count = len(groups)
+            
+            # Xabar yuborish
+            await update.message.reply_text(
+                get_message(user_data_uz, "users_count_msg", 
+                            users_count=users_count, 
+                            contacts_count=contacts_count, 
+                            groups_count=groups_count),
+                parse_mode="HTML"
+            )
+                
+            await log_admin_action(user_id, "view_users_count", "system", "none")
             return AdminStates.MAIN_MENU
             
         logger.warning(f"Noma'lum xabar ('{message_text}') admin panelda. User ID: {user_id}")
@@ -491,7 +514,8 @@ def get_admin_conversation_handler():
                     get_message({'language': 'uz'}, "add_balance_button").strip(),
                     get_message({'language': 'uz'}, "close_button").strip(),
                     get_message({'language': 'uz'}, "back_button").strip(), # Added Back button
-                    get_message({'language': 'uz'}, "feedback_list_button").strip()
+                    get_message({'language': 'uz'}, "feedback_list_button").strip(),
+                    get_message({'language': 'uz'}, "users_count_button").strip()
                 ]), admin_message_handler),
                 CallbackQueryHandler(admin_groups_pagination_handler, pattern="^admin_groups_"),
                 CallbackQueryHandler(admin_contacts_pagination_handler, pattern="^admin_contacts_")

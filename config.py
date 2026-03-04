@@ -14,7 +14,7 @@ CONTACTS_JSON_FILE = 'contacts.json'
 ACTIVE_GROUPS_JSON_FILE = 'active_groups.json'
 
 # Bot tokeni
-BOT_TOKEN = '8310919266:AAElBVKq80dsgorAXx_4rad08hJXx1jGX4c'
+BOT_TOKEN = '8468044431:AAGjyIqE-iMkBokmXQuDF2mAAdDnUSnKIdU'
 
 # Foydalanuvchi Telethon sozlamalari
 # DIQQAT: API_ID odatda faqat raqam bo'ladi, API_HASH esa uzun kod.
@@ -26,4 +26,4 @@ USER_PHONE_NUMBER = '+998915555390'
 LOG_FILE_NAME = 'bot_activity.log'
 
 # Yordam so'rovlari uchun guruh IDsi
-SUPPORT_GROUP_ID = -5155317107
+SUPPORT_GROUP_ID = -1003718211377

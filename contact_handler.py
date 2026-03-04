@@ -1,4 +1,5 @@
 import logging
+import re
 from telegram import Update
 from telegram.ext import ContextTypes, ConversationHandler, MessageHandler, filters, CommandHandler
 from database import add_contact # database modulini import qilamiz
@@ -76,6 +77,11 @@ async def process_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 def get_contact_conversation_handler():
+    from keyboards import get_all_menu_buttons
+    all_buttons = get_all_menu_buttons(get_message)
+    btn_pattern = "|".join([re.escape(b) for b in all_buttons])
+    buttons_regex = f"^({btn_pattern})$"
+    
     return ConversationHandler(
         entry_points=[
             MessageHandler(
@@ -85,7 +91,7 @@ def get_contact_conversation_handler():
             CommandHandler("add_contact", start_add_contact)
         ],
         states={
-            ContactStates.WAITING_CONTACT: [MessageHandler(filters.TEXT & ~filters.COMMAND, process_contact)],
+            ContactStates.WAITING_CONTACT: [MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex(buttons_regex), process_contact)],
         },
         fallbacks=[]
     )

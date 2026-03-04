@@ -24,14 +24,16 @@ logging.getLogger('admin_handler').setLevel(logging.DEBUG) # Add this line
 import sqlite3 # Yangi import
 # import gspread # Yangi import (ko'chirildi)
 # from oauth2client.service_account import ServiceAccountCredentials # Yangi import (ko'chirildi)
-from config import BOT_TOKEN, OWNER_ID # LOG_FILE_NAME endi alohida import qilinadi
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ChatMemberHandler, CallbackQueryHandler # CallbackQueryHandler qo'shildi
+from config import BOT_TOKEN, ADMINS, SUPPORT_GROUP_ID # LOG_FILE_NAME endi alohida import qilinadi
+from telegram import Update # Added Update
 import telegram # Added for telegram.error.Conflict
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ChatMemberHandler, CallbackQueryHandler, ContextTypes # Added ContextTypes
 from search_handler import get_search_conversation_handler
 from group_handler import get_group_conversation_handler
 from contact_handler import get_contact_conversation_handler
 from admin_handler import get_admin_conversation_handler
 from telethon_client import telethon_client
+from broadcast_handler import get_broadcast_conversation_handler
 from feedback_handler import get_feedback_conversation_handler
 from help_handler import get_help_conversation_handler, handle_admin_reply
 from database import init_db, add_group as db_add_group, remove_group as db_remove_group, get_all_groups as db_get_all_groups, add_user_to_json, get_user_count_from_json, get_group_count_from_json # Yangilangan importlar
@@ -268,11 +270,19 @@ def main():
 
     application.add_error_handler(error_handler)
     
+    # DEBUG: Chat ID larni logga chiqarish (Support guruhini topish uchun)
+    async def log_chat_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        if update.effective_chat:
+            logger.info(f"--- DEBUG CHAT ID --- | Title: {update.effective_chat.title} | ID: {update.effective_chat.id} | Type: {update.effective_chat.type}")
+    
+    application.add_handler(MessageHandler(filters.ALL, log_chat_id), group=-1) 
+    
     # Handlerlarni qo'shish
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("get_id", lambda u, c: u.message.reply_text(f"Bu chat ID raqami: {u.effective_chat.id}")))
+    application.add_handler(get_language_conversation_handler()) # Til tanlash eng ustiga o'tkazildi
+    
     application.add_handler(CommandHandler("balance", check_balance))
-    # application.add_handler(CommandHandler("help", help_command)) # help_handler ga o'tkazildi
-    # stats_command olib tashlandi
     application.add_handler(get_search_conversation_handler())
     # Search sahifa o'zgartirish va natijani ko'rish uchun callback query handler
     from search_handler import handle_search_page_callback
@@ -281,10 +291,16 @@ def main():
     application.add_handler(get_contact_conversation_handler())
 
     application.add_handler(get_admin_conversation_handler())
+    application.add_handler(get_broadcast_conversation_handler())
     application.add_handler(get_feedback_conversation_handler())
-    application.add_handler(get_help_conversation_handler()) # Qayta tiklandi
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_admin_reply)) # Admin javobini ushlash uchun
-    application.add_handler(get_language_conversation_handler())
+    application.add_handler(get_help_conversation_handler())
+    
+    # Faqat SUPPORT_GROUP_ID dan va reply bo'lgan xabarlar uchun
+    application.add_handler(MessageHandler(
+        filters.Chat(chat_id=SUPPORT_GROUP_ID) & filters.REPLY & filters.TEXT & ~filters.COMMAND, 
+        handle_admin_reply
+    ))
+    
     application.add_handler(ChatMemberHandler(on_chat_member_update, ChatMemberHandler.MY_CHAT_MEMBER))
 
     

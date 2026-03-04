@@ -1,4 +1,5 @@
 import asyncio
+import re
 import json
 import logging
 import time
@@ -432,7 +433,7 @@ async def xabar_yuborish(
         # User akkaunt ma'lumotlarini olish
         try:
             me = await telethon_client.client.get_me()
-            logger.info(f"👤 User akkaunt: {me.first_name} (@{me.username if me.username else 'username yo\'q'})")
+            logger.info(f"👤 User akkaunt: {me.first_name} (@{me.username if me.username else 'username yoq'})")
         except Exception as e:
             logger.warning(f"User akkaunt ma'lumotlarini olishda xato: {e}")
         
@@ -626,21 +627,26 @@ async def stop_broadcast_command(update: Update, context: ContextTypes.DEFAULT_T
 
 
 def get_broadcast_conversation_handler() -> ConversationHandler:
-    broadcast_button_uz = get_message({"language": "uz"}, "broadcast_message_button")
-    broadcast_button_ru = get_message({"language": "ru"}, "broadcast_message_button")
+    from keyboards import get_all_menu_buttons
+    all_buttons = get_all_menu_buttons(get_message)
+    btn_pattern = "|".join([re.escape(b) for b in all_buttons])
+    buttons_regex = f"^({btn_pattern})$"
+    
+    from language_handler import MESSAGES
+    broadcast_pattern = "|".join([re.escape(MESSAGES[lang]["broadcast_message_button"]) for lang in MESSAGES])
     return ConversationHandler(
         entry_points=[
             MessageHandler(
-                filters.Regex(f"^({broadcast_button_uz}|{broadcast_button_ru})$"),
+                filters.Regex(f"^({broadcast_pattern})$"),
                 start_broadcast,
             )
         ],
         states={
-            BroadcastStates.RECEIVE_MESSAGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_message)],
-            BroadcastStates.SELECT_ACTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_action)],
-            BroadcastStates.SELECT_FREQUENCY: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_frequency)],
-            BroadcastStates.SELECT_DURATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_duration)],
-            BroadcastStates.CONFIRM_BROADCAST: [MessageHandler(filters.TEXT & ~filters.COMMAND, confirm_broadcast)],
+            BroadcastStates.RECEIVE_MESSAGE: [MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex(buttons_regex), receive_message)],
+            BroadcastStates.SELECT_ACTION: [MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex(buttons_regex), select_action)],
+            BroadcastStates.SELECT_FREQUENCY: [MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex(buttons_regex), select_frequency)],
+            BroadcastStates.SELECT_DURATION: [MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex(buttons_regex), select_duration)],
+            BroadcastStates.CONFIRM_BROADCAST: [MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex(buttons_regex), confirm_broadcast)],
         },
         fallbacks=[],
     )

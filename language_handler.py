@@ -1,4 +1,5 @@
 import logging
+import re
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import ContextTypes, ConversationHandler, MessageHandler, filters, CommandHandler
 from keyboards import get_main_menu_keyboard # Yangi import
@@ -21,6 +22,9 @@ MESSAGES = {
         "add_contact": "📞 Kontakt qo'shish",
         "check_balance": "💰 Balans tekshirish",
         "send_feedback": "✍️ Fikr bildirish",
+        "broadcast_message_button": "📢 Xabar yuborish",
+        "broadcast_start_button": "🚀 Boshlash",
+        "broadcast_stop_button": "🛑 To'xtatish",
 
         "balance_check_title": "💰 <b>Balans tekshirish</b>",
         "current_balance": "Hozirda sizning balansingiz: {balance} so'm",
@@ -35,6 +39,7 @@ MESSAGES = {
         "add_balance_button": "💰 Balans qo'shish",
         "close_button": "❌ Yopish",
         "feedback_list_button": "Fikrlar ro'yxati",
+        "users_count_button": "📊 Statistika",
         "no_groups_found": "❌ Guruhlar topilmadi!",
         "all_groups_title": "👥 <b>Barcha Guruhlar</b>",
         "more_groups": "📝 ... va yana {count} ta guruh",
@@ -48,6 +53,7 @@ MESSAGES = {
         "admin_unexpected_error": "❌ Admin panelda kutilmagan xato yuz berdi. Iltimos, keyinroq urinib ko'ring.",
         "add_balance_wrong_format": "❌ Noto'g'ri format!\n\nIltimos, quyidagi formatda kiriting:\n`user_id:miqdor`\n\nMisol: `123456789:50000`",
         "balance_added_success": "✅ Balans muvaffaqiyatli qo'shildi!\n\n👤 Foydalanuvchi ID: {user_id}\n💰 Miqdor: {amount} so'm",
+        "users_count_msg": "📊 <b>Bot statistikasi:</b>\n\n👤 Foydalanuvchilar: <b>{users_count}</b> ta\n📞 Kontaktlar: <b>{contacts_count}</b> ta\n👥 Guruhlar: <b>{groups_count}</b> ta",
         "contact_add_start": "📞 <b>Kontakt qo'shish</b>\n\nKontakt ma'lumotlarini yuboring (username yoki telefon raqam):",
         "contact_add_success": "✅ Kontakt muvaffaqiyatli qo'shildi:\n`{contact_info}`",
         "contact_add_error": "❌ Kontaktni qo'shishda xatolik yuz berdi yoki kontakt allaqachon mavjud.",
@@ -79,7 +85,7 @@ MESSAGES = {
         "main_menu_button": "🏠 Bosh menyu",
         "prev_button": "◀️",
         "next_button": "▶️",
-        "select_language_button": "Tilni tanlash",
+        "select_language_button": "🌐 Tilni tanlash",
         "select_language_text": "Iltimos, tilni tanlang:",
         "start_message": "🏠 <b>Bosh menyu</b>",
         "help_button": "❓ Yordam",
@@ -96,6 +102,9 @@ MESSAGES = {
         "add_contact": "📞 Добавить контакт",
         "check_balance": "💰 Проверить баланс",
         "send_feedback": "✍️ Оставить отзыв",
+        "broadcast_message_button": "📢 Рассылка",
+        "broadcast_start_button": "🚀 Запустить",
+        "broadcast_stop_button": "🛑 Остановить",
 
         "balance_check_title": "💰 <b>Проверка баланса</b>",
         "current_balance": "Ваш текущий баланс: {balance} сум",
@@ -110,6 +119,7 @@ MESSAGES = {
         "add_balance_button": "💰 Добавить баланс",
         "close_button": "❌ Закрыть",
         "feedback_list_button": "Список отзывов",
+        "users_count_button": "📊 Статистика",
         "no_groups_found": "❌ Группы не найдены!",
         "all_groups_title": "👥 <b>Все группы</b>",
         "more_groups": "📝 ... и еще {count} групп",
@@ -123,6 +133,7 @@ MESSAGES = {
         "admin_unexpected_error": "❌ В админ-панели произошла непредвиденная ошибка. Пожалуйста, попробуйте позже.",
         "add_balance_wrong_format": "❌ Неверный формат!\n\nПожалуйста, введите в следующем формате:\n`user_id:сумма`\n\nПример: `123456789:50000`",
         "balance_added_success": "✅ Баланс успешно добавлен!\n\n👤 ID пользователя: {user_id}\n💰 Сумма: {amount} сум",
+        "users_count_msg": "📊 <b>Статистика бота:</b>\n\n👤 Пользователи: <b>{users_count}</b>\n📞 Контакты: <b>{contacts_count}</b>\n👥 Группы: <b>{groups_count}</b>",
         "contact_add_start": "📞 <b>Добавление контакта</b>\n\nОтправьте контактную информацию (имя пользователя или номер телефона):",
         "contact_add_success": "✅ Контакт успешно добавлен:\n`{contact_info}`",
         "contact_add_error": "❌ Произошла ошибка при добавлении контакта или контакт уже существует.",
@@ -154,7 +165,7 @@ MESSAGES = {
         "main_menu_button": "🏠 Главное меню",
         "prev_button": "◀️",
         "next_button": "▶️",
-        "select_language_button": "🇷🇺/🇺🇿 Сменить язык",
+        "select_language_button": "🌐 Сменить язык",
         "select_language_text": "Пожалуйста, выберите язык:",
         "start_message": "🚀 @logi_peek_bot — умный помощник для поиска грузов!\n\nЭтот бот поможет вам быстро, удобно и надежно выполнять логистические задачи:\n\n🔍 <b>Быстрый поиск грузов</b>\n— Найдите нужные грузы за несколько секунд\n\n👥 <b>Работа с контактами и группами</b>\n— Прямая связь с грузовладельцами и водителями\n\n💰 <b>Управление балансом</b>\n— Проверка и легкое пополнение баланса\n\n👉 Нажмите кнопку /start в боте, чтобы начать.",
         "help_button": "❓ Помощь",
@@ -171,6 +182,9 @@ MESSAGES = {
         "add_contact": "📞 Add Contact",
         "check_balance": "💰 Check Balance",
         "send_feedback": "✍️ Send Feedback",
+        "broadcast_message_button": "📢 Broadcast Message",
+        "broadcast_start_button": "🚀 Start",
+        "broadcast_stop_button": "🛑 Stop",
 
         "balance_check_title": "💰 <b>Balance Check</b>",
         "current_balance": "Your current balance: {balance} UZS",
@@ -185,6 +199,7 @@ MESSAGES = {
         "add_balance_button": "💰 Add Balance",
         "close_button": "❌ Close",
         "feedback_list_button": "Feedback List",
+        "users_count_button": "📊 Statistics",
         "no_groups_found": "❌ No groups found!",
         "all_groups_title": "👥 <b>All Groups</b>",
         "more_groups": "📝 ... and {count} more groups",
@@ -198,6 +213,7 @@ MESSAGES = {
         "admin_unexpected_error": "❌ Unexpected error in admin panel. Please try again later.",
         "add_balance_wrong_format": "❌ Invalid format!\n\nPlease enter in the following format:\n`user_id:amount`\n\nExample: `123456789:50000`",
         "balance_added_success": "✅ Balance successfully added!\n\n👤 User ID: {user_id}\n💰 Amount: {amount} UZS",
+        "users_count_msg": "📊 <b>Bot Statistics:</b>\n\n👤 Users: <b>{users_count}</b>\n📞 Contacts: <b>{contacts_count}</b>\n👥 Groups: <b>{groups_count}</b>",
         "contact_add_start": "📞 <b>Add Contact</b>\n\nSend contact info (username or phone number):",
         "contact_add_success": "✅ Contact successfully added:\n`{contact_info}`",
         "contact_add_error": "❌ Error adding contact or contact already exists.",
@@ -229,7 +245,7 @@ MESSAGES = {
         "main_menu_button": "🏠 Main Menu",
         "prev_button": "◀️",
         "next_button": "▶️",
-        "select_language_button": "Change Language",
+        "select_language_button": "🌐 Change Language",
         "select_language_text": "Please select language:",
         "start_message": "🚀 @logi_peek_bot — smart assistant for finding loads!\n\nThis bot helps you perform logistics tasks quickly, conveniently and reliably:\n\n🔍 <b>Fast Load Search</b>\n— Find loads in seconds\n\n👥 <b>Work with Contacts and Groups</b>\n— Direct communication with load owners and drivers\n\n💰 <b>Balance Management</b>\n— Check and easily top up balance\n\n👉 Click /start button in the bot to begin.",
         "help_button": "❓ Help",
@@ -307,13 +323,30 @@ async def set_language(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     return ConversationHandler.END
 
 def get_language_conversation_handler() -> ConversationHandler:
+    from keyboards import get_all_menu_buttons
+    # Entry points uchun barcha tillardagi tugma matnlari
+    entry_buttons = [
+        MESSAGES['uz']['select_language_button'],
+        MESSAGES['ru']['select_language_button'],
+        MESSAGES['en']['select_language_button']
+    ]
+    
+    all_buttons = get_all_menu_buttons(get_message)
+    btn_pattern = "|".join([re.escape(b) for b in all_buttons])
+    buttons_regex = f"^({btn_pattern})$"
+    
     return ConversationHandler(
         entry_points=[
             CommandHandler("language", start_language_selection),
-            MessageHandler(filters.Regex(f"^({MESSAGES['uz']['select_language_button']}|{MESSAGES['ru']['select_language_button']}|{MESSAGES['en']['select_language_button']})$"), start_language_selection)
+            MessageHandler(filters.Text(entry_buttons), start_language_selection)
         ],
         states={
-            LanguageStates.SELECT_LANGUAGE: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_language)]
+            LanguageStates.SELECT_LANGUAGE: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex(buttons_regex), set_language),
+                # Agar foydalanuvchi til tanlash holatida yana "Tilni tanlash" tugmasini bossa
+                MessageHandler(filters.Text(entry_buttons), start_language_selection)
+            ]
         },
-        fallbacks=[] # Til tanlashda fallbacks hozircha kerak emas
+        fallbacks=[],
+        allow_reentry=True
     )

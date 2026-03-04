@@ -1,4 +1,5 @@
 import os
+import re
 from telegram import Update
 from telegram.ext import ConversationHandler, MessageHandler, filters, ContextTypes, CommandHandler
 from database import save_feedback
@@ -41,6 +42,11 @@ async def feedback_received(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     return ConversationHandler.END
 
 def get_feedback_conversation_handler() -> ConversationHandler:
+    from keyboards import get_all_menu_buttons
+    all_buttons = get_all_menu_buttons(get_message)
+    btn_pattern = "|".join([re.escape(b) for b in all_buttons])
+    buttons_regex = f"^({btn_pattern})$"
+    
     return ConversationHandler(
         entry_points=[
             MessageHandler(
@@ -50,7 +56,7 @@ def get_feedback_conversation_handler() -> ConversationHandler:
             CommandHandler("feedback", feedback_start)
         ],
         states={
-            FEEDBACK_TEXT: [MessageHandler(filters.TEXT & ~filters.COMMAND, feedback_received)]
+            FEEDBACK_TEXT: [MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex(buttons_regex), feedback_received)]
         },
         fallbacks=[]
     )

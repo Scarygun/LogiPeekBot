@@ -119,6 +119,11 @@ async def process_group(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Conversation handler yaratish
 def get_group_conversation_handler():
+    from keyboards import get_all_menu_buttons
+    all_buttons = get_all_menu_buttons(get_message)
+    btn_pattern = "|".join([re.escape(b) for b in all_buttons])
+    buttons_regex = f"^({btn_pattern})$"
+    
     return ConversationHandler(
         entry_points=[
             MessageHandler(
@@ -128,7 +133,7 @@ def get_group_conversation_handler():
             CommandHandler("add_group", start_add_group)
         ],
         states={
-            GroupStates.WAITING_GROUP: [MessageHandler(filters.TEXT & ~filters.COMMAND, process_group)],
+            GroupStates.WAITING_GROUP: [MessageHandler(filters.TEXT & ~filters.COMMAND & ~filters.Regex(buttons_regex), process_group)],
         },
         fallbacks=[]
     )
