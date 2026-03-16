@@ -21,13 +21,10 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("telethon").setLevel(logging.INFO)
 logging.getLogger('admin_handler').setLevel(logging.DEBUG) # Add this line
 
-import sqlite3 # Yangi import
-# import gspread # Yangi import (ko'chirildi)
-# from oauth2client.service_account import ServiceAccountCredentials # Yangi import (ko'chirildi)
-from config import BOT_TOKEN, ADMINS, SUPPORT_GROUP_ID # LOG_FILE_NAME endi alohida import qilinadi
-from telegram import Update # Added Update
-import telegram # Added for telegram.error.Conflict
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ChatMemberHandler, CallbackQueryHandler, ContextTypes # Added ContextTypes
+from config import BOT_TOKEN, ADMINS, SUPPORT_GROUP_ID
+from telegram import Update
+import telegram
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ChatMemberHandler, CallbackQueryHandler, ContextTypes
 from search_handler import get_search_conversation_handler
 from group_handler import get_group_conversation_handler
 from contact_handler import get_contact_conversation_handler
@@ -36,24 +33,15 @@ from telethon_client import telethon_client
 from broadcast_handler import get_broadcast_conversation_handler
 from feedback_handler import get_feedback_conversation_handler
 from help_handler import get_help_conversation_handler, handle_admin_reply
-from database import init_db, add_group as db_add_group, remove_group as db_remove_group, get_all_groups as db_get_all_groups, add_user_to_json, get_user_count_from_json, get_group_count_from_json # Yangilangan importlar
+from database import init_db, add_group as db_add_group, remove_group as db_remove_group, get_all_groups as db_get_all_groups, add_user_to_json, get_user_count_from_json, get_group_count_from_json
 from config import USER_API_ID, USER_API_HASH
 from menu import set_bot_commands
 from language_handler import get_message, get_language_conversation_handler, LanguageStates, start_language_selection
 
-from keyboards import get_main_menu_keyboard # Yangi import
-# from datetime import datetime # Yangi import
+from keyboards import get_main_menu_keyboard
+from datetime import datetime
 
-# --- DB setup (oddiy) ---
-# conn = sqlite3.connect("groups.db") # Global ulanish olib tashlandi
-# cur = conn.cursor() # Global kursor olib tashlandi
-# cur.execute("""
-# CREATE TABLE IF NOT EXISTS groups (
-#     chat_id INTEGER PRIMARY KEY,
-#     title TEXT,
-#     saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-# )""")
-# conn.commit()
+# --- Google Sheets setup ---
 
 async def add_group(chat_id: int, title: Optional[str]): # Changed str | None to Optional[str]
     await db_add_group(chat_id, title) # database.py dagi funksiyani chaqirish

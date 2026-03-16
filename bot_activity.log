@@ -328797,3 +328797,50 @@ asyncio.exceptions.IncompleteReadError: 0 bytes read on a total of 8 expected by
 2026-03-12 16:55:44,185 - telethon.client.updates - INFO - Got difference for channel 3708011056 updates
 2026-03-12 16:55:44,829 - telethon.client.updates - INFO - Got difference for channel 1390807325 updates
 2026-03-12 16:56:07,814 - telethon.client.updates - INFO - Got difference for channel 1390807325 updates
+2026-03-16 18:37:04,146 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
+2026-03-16 18:37:04,287 - admin_handler - DEBUG - Admin ConversationHandler yaratilmoqda...
+2026-03-16 18:37:04,628 - __main__ - INFO - Telethon client uzildi
+2026-03-16 18:37:30,425 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
+2026-03-16 18:37:30,543 - admin_handler - DEBUG - Admin ConversationHandler yaratilmoqda...
+2026-03-16 18:37:30,882 - __main__ - INFO - Telethon client uzildi
+2026-03-16 18:39:24,061 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
+2026-03-16 18:39:24,191 - admin_handler - DEBUG - Admin ConversationHandler yaratilmoqda...
+2026-03-16 18:39:27,757 - database - INFO - MongoDB indices initialized.
+2026-03-16 18:39:27,757 - telethon_client - INFO - Telethon client ulanmoqda...
+2026-03-16 18:39:27,758 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
+2026-03-16 18:39:27,871 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
+2026-03-16 18:39:28,355 - telethon_client - INFO - Telethon client muvaffaqiyatli ulandi va avtorizatsiyadan o'tdi.
+2026-03-16 18:39:28,355 - __main__ - INFO - Telethon client muvaffaqiyatli ulandi
+2026-03-16 18:39:28,497 - __main__ - INFO - Persistent bot commands set.
+2026-03-16 18:39:29,359 - __main__ - INFO - Bot description set successfully for multiple languages.
+2026-03-16 18:39:29,472 - telegram.ext.Application - INFO - Application started
+2026-03-16 18:39:29,796 - __main__ - INFO - --- DEBUG CHAT ID --- | Title: None | ID: 8093402925 | Type: private
+2026-03-16 18:39:30,143 - __main__ - INFO - --- DEBUG CHAT ID --- | Title: None | ID: 8093402925 | Type: private
+2026-03-16 18:39:30,143 - __main__ - INFO - --- DEBUG CHAT ID --- | Title: None | ID: 8093402925 | Type: private
+2026-03-16 18:39:30,143 - __main__ - INFO - --- DEBUG CHAT ID --- | Title: None | ID: 8093402925 | Type: private
+2026-03-16 18:39:41,238 - __main__ - INFO - --- DEBUG CHAT ID --- | Title: None | ID: 8093402925 | Type: private
+2026-03-16 18:39:47,240 - __main__ - INFO - --- DEBUG CHAT ID --- | Title: None | ID: 8093402925 | Type: private
+2026-03-16 18:39:47,241 - admin_handler - DEBUG - Admin panel buyrug'i ishga tushdi. User ID: 8093402925
+2026-03-16 18:39:47,791 - admin_handler - DEBUG - Admin panel MAIN_MENU holatiga qaytmoqda. User ID: 8093402925. Return state: 1
+2026-03-16 18:39:52,603 - __main__ - INFO - --- DEBUG CHAT ID --- | Title: None | ID: 8093402925 | Type: private
+2026-03-16 18:39:52,603 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '📊 Statistika'
+2026-03-16 18:39:52,603 - admin_handler - DEBUG - Expected Groups Button: '👥 Guruhlar'
+2026-03-16 18:39:52,603 - admin_handler - DEBUG - Expected Contacts Button: '📞 Kontaktlar'
+2026-03-16 18:39:52,603 - admin_handler - DEBUG - Expected Add Balance Button: '💰 Balans qo'shish'
+2026-03-16 18:39:52,603 - admin_handler - DEBUG - Expected Close Button: '❌ Yopish'
+2026-03-16 18:39:52,603 - admin_handler - DEBUG - Expected Feedback List Button: 'Fikrlar ro'yxati'
+2026-03-16 18:39:52,603 - admin_handler - DEBUG - Received Message Text: '📊 Statistika' (length: 12)
+2026-03-16 18:39:52,603 - admin_handler - DEBUG - Admin users count tugmasi bosildi. User ID: 8093402925
+2026-03-16 18:40:37,840 - __main__ - INFO - --- DEBUG CHAT ID --- | Title: None | ID: 8093402925 | Type: private
+2026-03-16 18:40:37,841 - admin_handler - INFO - Admin message handler ishga tushdi. User ID: 8093402925, Message Text: '🔙 Orqaga'
+2026-03-16 18:40:37,841 - admin_handler - DEBUG - Expected Groups Button: '👥 Guruhlar'
+2026-03-16 18:40:37,841 - admin_handler - DEBUG - Expected Contacts Button: '📞 Kontaktlar'
+2026-03-16 18:40:37,841 - admin_handler - DEBUG - Expected Add Balance Button: '💰 Balans qo'shish'
+2026-03-16 18:40:37,841 - admin_handler - DEBUG - Expected Close Button: '❌ Yopish'
+2026-03-16 18:40:37,841 - admin_handler - DEBUG - Expected Feedback List Button: 'Fikrlar ro'yxati'
+2026-03-16 18:40:37,841 - admin_handler - DEBUG - Received Message Text: '🔙 Orqaga' (length: 8)
+2026-03-16 18:40:37,841 - admin_handler - DEBUG - Admin close/back tugmasi bosildi. User ID: 8093402925
+2026-03-16 18:40:38,500 - admin_handler - DEBUG - Admin panel yopildi. Asosiy menyuga qaytmoqda. Admin ID: 8093402925
+2026-03-16 18:40:43,175 - __main__ - INFO - --- DEBUG CHAT ID --- | Title: None | ID: 8093402925 | Type: private
+2026-03-16 18:41:34,558 - __main__ - INFO - --- DEBUG CHAT ID --- | Title: None | ID: 8093402925 | Type: private
+2026-03-16 18:41:34,559 - group_handler - WARNING - Guruhning haqiqiy nomini (ID orqali) olishda xatolik: invalid literal for int() with base 10: '@lorry_uzbek'

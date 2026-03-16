@@ -13,8 +13,12 @@ GROUPS_JSON_FILE = 'groups.json'
 CONTACTS_JSON_FILE = 'contacts.json'
 ACTIVE_GROUPS_JSON_FILE = 'active_groups.json'
 
+# MongoDB sozlamalari
+MONGODB_URI = 'mongodb+srv://ozodbeksalimov989_db_user:admin123@cluster0.cziiq0q.mongodb.net/?appName=Cluster0'
+DATABASE_NAME_MONGO = 'logipeek_db'
+
 # Bot tokeni
-BOT_TOKEN = '8321048668:AAHVU1ITY_uatfMuHZ9cubuHtboufiTAj_k'
+BOT_TOKEN = '8468044431:AAGjyIqE-iMkBokmXQuDF2mAAdDnUSnKIdU'
 
 # Foydalanuvchi Telethon sozlamalari
 # DIQQAT: API_ID odatda faqat raqam bo'ladi, API_HASH esa uzun kod.
