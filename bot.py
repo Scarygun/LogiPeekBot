@@ -32,8 +32,8 @@ from keyboards import get_main_menu_keyboard
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     await add_user_to_json(user.id, user.username)
-    welcome_message = get_message(user.id, "welcome_message")
-    await update.message.reply_text(welcome_message, reply_markup=get_main_menu_keyboard(user.id))
+    welcome_message = get_message(context.user_data, "welcome")
+    await update.message.reply_text(welcome_message, reply_markup=get_main_menu_keyboard(context.user_data, get_message))
 
 async def post_init(application):
     init_db()

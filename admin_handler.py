@@ -19,7 +19,7 @@ def get_admin_main_menu_keyboard():
     keyboard = [
         [get_message(user_data_uz, "groups_button"), get_message(user_data_uz, "contacts_button")],
         [get_message(user_data_uz, "add_balance_button"), get_message(user_data_uz, "feedback_list_button")],
-        [get_message(user_data_uz, "users_count_button"), "Telethon Auth"],
+        [get_message(user_data_uz, "users_count_button")],
         [get_message(user_data_uz, "back_button")]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
@@ -31,8 +31,6 @@ class AdminStates:
     VIEW_CONTACTS = 3
     ADD_BALANCE = 4
     VIEW_FEEDBACK = 5
-    TELETHON_AUTH = 6
-    TELETHON_PASS = 7
 
 # Admin ekanligini tekshirish
 def is_admin(user_id):
@@ -194,30 +192,6 @@ async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
             await log_admin_action(user_id, "view_users_count", "system", "none")
             return AdminStates.MAIN_MENU
             
-        elif message_text == "Telethon Auth":
-            logger.info(f"Admin Telethon Auth tugmasi bosildi. User ID: {user_id}")
-            from telethon_client import telethon_client
-            
-            # Avval ulanishni tekshiramiz
-            is_auth = await telethon_client.connect(send_code=False)
-            if is_auth:
-                await update.message.reply_text("✅ Telethon allaqachon avtorizatsiyadan o'tgan!")
-                return AdminStates.MAIN_MENU
-            
-            # Authni boshlaymiz
-            success, message = await telethon_client.start_auth()
-            
-            if success:
-                reply_markup = get_back_keyboard(user_data_uz, get_message)
-                await update.message.reply_text(
-                    "📲 Telegramga kelgan 5 xonali kodni kiriting:\n\n"
-                    "Misol: 12345",
-                    reply_markup=reply_markup
-                )
-                return AdminStates.TELETHON_AUTH
-            else:
-                await update.message.reply_text(f"❌ Xatolik: {message}")
-                return AdminStates.MAIN_MENU
             
         logger.warning(f"Noma'lum xabar ('{message_text}') admin panelda. User ID: {user_id}")
         return AdminStates.MAIN_MENU
@@ -549,46 +523,7 @@ def get_admin_conversation_handler():
                 CallbackQueryHandler(admin_contacts_pagination_handler, pattern="^admin_contacts_")
             ],
             AdminStates.ADD_BALANCE: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_balance)],
-            AdminStates.TELETHON_AUTH: [MessageHandler(filters.TEXT & ~filters.COMMAND, telethon_auth_callback)],
-            AdminStates.TELETHON_PASS: [MessageHandler(filters.TEXT & ~filters.COMMAND, telethon_pass_callback)],
         },
         fallbacks=[CommandHandler("admin", admin_panel)],
     )
 
-async def telethon_auth_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    code = update.message.text.strip()
-    user_data_uz = {'language': 'uz'}
-    
-    # Back button check
-    if code == get_message(user_data_uz, "back_button"):
-        return await admin_panel(update, context)
-
-    from telethon_client import telethon_client
-    result = await telethon_client.verify_code(code)
-    
-    if result == True:
-        await update.message.reply_text("✅ Telethon muvaffaqiyatli avtorizatsiyadan o'tdi!")
-        return await admin_panel(update, context)
-    elif result == "password_required":
-        await update.message.reply_text("🔐 2FA parol talab qilinadi. Iltimos parolni kiriting:")
-        return AdminStates.TELETHON_PASS
-    else:
-        await update.message.reply_text("❌ Noto'g'ri kod! Qayta urinib ko'ring yoki 'Orqaga' bosing.")
-        return AdminStates.TELETHON_AUTH
-
-async def telethon_pass_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    password = update.message.text.strip()
-    user_data_uz = {'language': 'uz'}
-
-    # Back button check
-    if password == get_message(user_data_uz, "back_button"):
-        return await admin_panel(update, context)
-
-    from telethon_client import telethon_client
-    if await telethon_client.verify_password(password):
-        await update.message.reply_text("✅ Telethon muvaffaqiyatli avtorizatsiyadan o'tdi!")
-        return await admin_panel(update, context)
-    else:
-        await update.message.reply_text("❌ Noto'g'ri parol! Qayta urinib ko'ring yoki 'Orqaga' bosing.")
-        return AdminStates.TELETHON_PASS

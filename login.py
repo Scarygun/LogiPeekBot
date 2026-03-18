@@ -6,13 +6,21 @@ from config import USER_API_ID, USER_API_HASH, USER_PHONE_NUMBER
 
 async def main():
     print("="*50)
-    print("TELEGRAM LOGIN SCRIPT")
+    print("TELEGRAM LOGIN SCRIPT (ROBUST MODE)")
     print("="*50)
     
-    # Session name 'user_session' is used by the main bot as well
+    session_file = 'user_session.session'
+    if os.path.exists(session_file):
+        print(f"Eski sessiya fayli topildi. Uni tozalash tavsiya etiladi.")
+        ans = input("Eski sessiyani o'chirib, yangidan boshlaymizmi? (y/n): ")
+        if ans.lower() == 'y':
+            os.remove(session_file)
+            print("Sessiya fayli o'chirildi.")
+
     client = TelegramClient('user_session', USER_API_ID, USER_API_HASH)
     
     print(f"\nUlanmoqda: {USER_PHONE_NUMBER}")
+    print("Eslatma: Kod odatda Telegram ilovangizga (SMS emas) xabar bo'lib boradi.")
     
     try:
         await client.start(phone=USER_PHONE_NUMBER)
@@ -21,14 +29,12 @@ async def main():
         wait_minutes = (e.seconds % 3600) // 60
         print("\n" + "!"*50)
         print("TELEGRAM CHEKLOVI (FLOOD WAIT)")
-        print(f"Siz juda ko'p urinish qildingiz.")
         print(f"Kutish vaqti: {e.seconds} soniya (~{wait_hours} soat {wait_minutes} daqiqa).")
-        print("Iltimos, ushbu vaqtdan keyin qayta urinib ko'ring.")
         print("!"*50 + "\n")
         await client.disconnect()
         return
     except Exception as e:
-        print(f"\nKutulmagan xatolik: {e}")
+        print(f"\nXatolik: {e}")
         await client.disconnect()
         return
     
@@ -36,12 +42,10 @@ async def main():
         me = await client.get_me()
         print("\n" + "="*50)
         print("MUVAFFAQIYATLI!")
-        print(f"Siz {me.first_name} (ID: {me.id}) sifatida kirdingiz.")
-        print("Sessiya 'user_session.session' fayliga saqlandi.")
-        print("Endi botni ishga tushirishingiz mumkin.")
+        print(f"Siz {me.first_name} sifatida kirdingiz.")
         print("="*50)
     else:
-        print("\nXato: Avtorizatsiyadan o'tib bo'lmadi.")
+        print("\nXato: Avtorizatsiya yakunlanmadi.")
 
     await client.disconnect()
 
