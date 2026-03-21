@@ -261,6 +261,18 @@ def get_message(user_data, key, **kwargs):
     message = MESSAGES.get(lang, {}).get(key, MESSAGES['uz'][key]) # Agar tanlangan tilda bo'lmasa, 'uz' tilidan oladi
     return message.format(**kwargs)
 
+def is_back_button(text):
+    """Check if the text matches 'back_button' in any language."""
+    if not text:
+        return False
+    # Remove any extra whitespace from the received text
+    clean_text = text.strip()
+    for lang in MESSAGES:
+        # Also strip stored messages just in case
+        if clean_text == MESSAGES[lang]["back_button"].strip():
+            return True
+    return False
+
 async def start_language_selection(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     keyboard = [
         [KeyboardButton("🇺🇿 O'zbekcha"), KeyboardButton("🇷🇺 Русский")],
@@ -280,7 +292,7 @@ async def set_language(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     
     logger.info(f"Language selection received: '{choice}' from User {user_id}")
 
-    if choice == get_message(context.user_data, "back_button"):
+    if is_back_button(choice):
         # Asosiy menyuga qaytish
         reply_markup = get_main_menu_keyboard(context.user_data, get_message)
         await update.message.reply_text(get_message(context.user_data, "main_menu"), reply_markup=reply_markup)

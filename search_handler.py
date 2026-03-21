@@ -36,9 +36,8 @@ async def start_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Qayerdan qidirishni olish
 async def process_from(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
-    back_text = get_message(context.user_data, "back_button")
-    
-    if text == back_text:
+    from language_handler import is_back_button
+    if is_back_button(text):
         # Bosh menyuga qaytish
         reply_markup = get_main_menu_keyboard(context.user_data, get_message)
         await update.message.reply_text(
@@ -118,9 +117,8 @@ async def progress_callback(current_count, total_count, current_results, update,
 # Qayerga qidirishni olish va natijalarni ko'rsatish
 async def process_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
-    back_text = get_message(context.user_data, "back_button")
-    
-    if text == back_text:
+    from language_handler import is_back_button
+    if is_back_button(text):
         # Oldingi qadamga qaytish (WAITING_FROM)
         reply_markup = get_back_keyboard(context.user_data, get_message)
         await update.message.reply_text(
@@ -452,12 +450,12 @@ def get_search_conversation_handler():
     btn_pattern = "|".join([re.escape(b) for b in all_buttons])
     buttons_regex = f"^({btn_pattern})$"
     
+    from language_handler import MESSAGES
+    entry_buttons = [MESSAGES[lang]["search_load"] for lang in MESSAGES]
+    
     return ConversationHandler(
         entry_points=[
-            MessageHandler(
-                filters.Regex(f"^({get_message({'language': 'uz'}, 'search_load')}|{get_message({'language': 'ru'}, 'search_load')})$"), 
-                start_search
-            ),
+            MessageHandler(filters.Text(entry_buttons), start_search),
             CommandHandler("search", start_search)
         ],
         states={

@@ -23,6 +23,12 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, fil
 import telethon
 from search_handler import get_search_conversation_handler
 from admin_handler import get_admin_conversation_handler
+from group_handler import get_group_conversation_handler
+from contact_handler import get_contact_conversation_handler
+from help_handler import get_help_conversation_handler, handle_admin_reply
+from feedback_handler import get_feedback_conversation_handler
+from broadcast_handler import get_broadcast_conversation_handler
+from balance_handler import get_balance_handler
 from telethon_client import telethon_client
 from database import init_db, add_user_to_json
 from menu import set_bot_commands
@@ -121,6 +127,16 @@ def main():
     application.add_handler(get_language_conversation_handler())
     application.add_handler(get_search_conversation_handler())
     application.add_handler(get_admin_conversation_handler())
+    application.add_handler(get_group_conversation_handler())
+    application.add_handler(get_contact_conversation_handler())
+    application.add_handler(get_help_conversation_handler())
+    application.add_handler(get_feedback_conversation_handler())
+    application.add_handler(get_broadcast_conversation_handler())
+    application.add_handler(get_balance_handler())
+    
+    # Admin reply handler for support group
+    application.add_handler(MessageHandler(filters.REPLY & filters.Chat(chat_id=SUPPORT_GROUP_ID), handle_admin_reply))
+    
     application.run_polling()
 
 if __name__ == '__main__':

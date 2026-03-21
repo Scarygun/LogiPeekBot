@@ -22,9 +22,8 @@ async def feedback_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 async def feedback_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_feedback = update.message.text
-    back_text = get_message(context.user_data, "back_button")
-    
-    if user_feedback == back_text:
+    from language_handler import is_back_button
+    if is_back_button(user_feedback):
         # Bosh menyuga qaytish
         reply_markup = get_main_menu_keyboard(context.user_data, get_message)
         await update.message.reply_text(
@@ -47,12 +46,12 @@ def get_feedback_conversation_handler() -> ConversationHandler:
     btn_pattern = "|".join([re.escape(b) for b in all_buttons])
     buttons_regex = f"^({btn_pattern})$"
     
+    from language_handler import MESSAGES
+    entry_buttons = [MESSAGES[lang]["send_feedback"] for lang in MESSAGES]
+    
     return ConversationHandler(
         entry_points=[
-            MessageHandler(
-                filters.Regex(f"^({get_message({'language': 'uz'}, 'send_feedback')}|{get_message({'language': 'ru'}, 'send_feedback')})$"), 
-                feedback_start
-            ),
+            MessageHandler(filters.Text(entry_buttons), feedback_start),
             CommandHandler("feedback", feedback_start)
         ],
         states={

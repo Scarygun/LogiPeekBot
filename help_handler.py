@@ -27,9 +27,8 @@ async def help_received(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     user_message = update.message.text
     user = update.effective_user
     logger.info(f"Yordam xabari olindi: User {user.id} - '{user_message}'")
-    back_text = get_message(context.user_data, "back_button")
-    
-    if user_message == back_text:
+    from language_handler import is_back_button
+    if is_back_button(user_message):
         logger.info(f"Yordam so'rovi bekor qilindi (Orqaga bosildi): User {user.id}")
         # Return to main menu
         reply_markup = get_main_menu_keyboard(context.user_data, get_message)
@@ -89,12 +88,12 @@ def get_help_conversation_handler() -> ConversationHandler:
     btn_pattern = "|".join([re.escape(b) for b in all_buttons])
     buttons_regex = f"^({btn_pattern})$"
     
+    from language_handler import MESSAGES
+    entry_buttons = [MESSAGES[lang]["help_button"] for lang in MESSAGES]
+    
     return ConversationHandler(
         entry_points=[
-            MessageHandler(
-                filters.Regex(f"^({get_message({'language': 'uz'}, 'help_button')}|{get_message({'language': 'ru'}, 'help_button')}|{get_message({'language': 'en'}, 'help_button')})$"), 
-                help_start
-            ),
+            MessageHandler(filters.Text(entry_buttons), help_start),
             CommandHandler("help", help_start),
         ],
         states={

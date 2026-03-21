@@ -69,6 +69,7 @@ async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
     logger.info(f"Admin message handler ishga tushdi. User ID: {user_id}, Message Text: '{message_text}'")
     
     user_data_uz = {'language': 'uz'}
+    from language_handler import is_back_button
     
     # Har bir tugma matnini logga chiqarish
 
@@ -142,7 +143,7 @@ async def admin_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
             logger.debug(f"Admin ADD_BALANCE holatiga o'tmoqda. Admin ID: {user_id}")
             return AdminStates.ADD_BALANCE
             
-        elif message_text == close_btn_text or message_text == get_message(user_data_uz, "back_button").strip():
+        elif is_back_button(message_text) or message_text == close_btn_text:
             logger.debug(f"Admin close/back tugmasi bosildi. User ID: {user_id}")
             # await update.message.reply_text(get_message(user_data_uz, "admin_panel_close")) # "Yopildi" xabari shart emas, chunki menyu chiqadi
             await log_admin_action(user_id, "close_admin_panel", "system", "none")
@@ -210,11 +211,8 @@ async def add_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(get_message(context.user_data, "admin_not_authorized"))
         return ConversationHandler.END
 
-    # Back button handling
-    user_data_uz = {'language': 'uz'}
-    back_text = get_message(user_data_uz, "back_button")
-    
-    if message_text == back_text:
+    from language_handler import is_back_button
+    if is_back_button(message_text):
         reply_markup = get_admin_main_menu_keyboard()
         await update.message.reply_text(
             get_message(user_data_uz, "admin_panel_welcome"),
@@ -231,16 +229,18 @@ async def add_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id_to_add = user_id_to_add.strip()
         amount = float(amount.strip())
         
-        # Bu yerda haqiqiy balans qo'shish logikasi bo'ladi
-        # Hozircha faqat log yozamiz
-        
-        await log_admin_action(user_id, "add_balance", "user", user_id_to_add)
-        
-        await update.message.reply_text(
-            get_message({'language': 'uz'}, "balance_added_success", user_id=user_id_to_add, amount=amount),
-            parse_mode="Markdown"
-        )
-        logger.debug(f"Balans qo'shish muvaffaqiyatli. Admin ID: {user_id}, Target User ID: {user_id_to_add}, Amount: {amount}")
+        # Haqiqiy balans qo'shish logikasi
+        from database import update_balance
+        if await update_balance(user_id_to_add, amount):
+            await log_admin_action(user_id, "add_balance", "user", user_id_to_add)
+            
+            await update.message.reply_text(
+                get_message({'language': 'uz'}, "balance_added_success", user_id=user_id_to_add, amount=amount),
+                parse_mode="Markdown"
+            )
+            logger.info(f"Balans qo'shish muvaffaqiyatli. Admin ID: {user_id}, Target User ID: {user_id_to_add}, Amount: {amount}")
+        else:
+            await update.message.reply_text("❌ Balans qo'shishda xatolik yuz berdi. Foydalanuvchi topilmadi.")
         
     except ValueError:
         logger.error(f"Balans qo'shishda noto'g'ri format. Admin ID: {user_id}, Message: {message_text}")

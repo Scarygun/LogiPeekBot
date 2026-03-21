@@ -70,6 +70,36 @@ async def load_users_from_json() -> dict:
         return users
     return await asyncio.to_thread(_load)
 
+async def get_balance(user_id: Union[int, str]) -> float:
+    """Gets the balance of a user from the users collection."""
+    def _get():
+        try:
+            uid = int(user_id)
+        except:
+            uid = user_id
+        user = get_db().users.find_one({"user_id": uid})
+        if user:
+            return float(user.get("balance", 0.0))
+        return 0.0
+    return await asyncio.to_thread(_get)
+
+async def update_balance(user_id: Union[int, str], amount: float) -> bool:
+    """Updates (adds to) the balance of a user in the users collection."""
+    def _update():
+        try:
+            uid = int(user_id)
+        except:
+            uid = user_id
+        
+        # We use $inc to add to the balance
+        result = get_db().users.update_one(
+            {"user_id": uid},
+            {"$inc": {"balance": amount}, "$set": {"updated_at": datetime.now().isoformat()}},
+            upsert=True
+        )
+        return result.modified_count > 0 or result.upserted_id is not None
+    return await asyncio.to_thread(_update)
+
 # ========== CONTACT FUNCTIONS ==========
 
 async def add_contact(user_id: int, username: Optional[str], full_name: Optional[str], phone_number: Optional[str]):

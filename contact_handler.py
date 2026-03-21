@@ -26,9 +26,8 @@ async def start_add_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def process_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
     import re
     text = update.message.text.strip()
-    back_text = get_message(context.user_data, "back_button")
-    
-    if text == back_text:
+    from language_handler import is_back_button
+    if is_back_button(text):
         # Bosh menyuga qaytish
         reply_markup = get_main_menu_keyboard(context.user_data, get_message)
         await update.message.reply_text(
@@ -82,12 +81,12 @@ def get_contact_conversation_handler():
     btn_pattern = "|".join([re.escape(b) for b in all_buttons])
     buttons_regex = f"^({btn_pattern})$"
     
+    from language_handler import MESSAGES
+    entry_buttons = [MESSAGES[lang]["add_contact"] for lang in MESSAGES]
+    
     return ConversationHandler(
         entry_points=[
-            MessageHandler(
-                filters.Regex(f"^({get_message({'language': 'uz'}, 'add_contact')}|{get_message({'language': 'ru'}, 'add_contact')})$"), 
-                start_add_contact
-            ),
+            MessageHandler(filters.Text(entry_buttons), start_add_contact),
             CommandHandler("add_contact", start_add_contact)
         ],
         states={
