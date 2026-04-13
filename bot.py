@@ -6,13 +6,19 @@ from typing import Optional
 from datetime import datetime
 
 # Log konfiguratsiyasi
+handlers = [logging.StreamHandler()]
+
+# Vercel-da faqat StreamHandler ishlatamiz (faylga ruxsat yo'qligi sababli)
+if not os.getenv('VERCEL'):
+    try:
+        handlers.append(logging.FileHandler(LOG_FILE_NAME, encoding='utf-8'))
+    except Exception as e:
+        print(f"Log faylini ochib bo'lmadi: {e}")
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(LOG_FILE_NAME, encoding='utf-8'),
-        logging.StreamHandler()
-    ]
+    handlers=handlers
 )
 logger = logging.getLogger(__name__)
 
@@ -34,6 +40,7 @@ from database import init_db, add_user_to_json
 from menu import set_bot_commands
 from language_handler import get_message, get_language_conversation_handler
 from keyboards import get_main_menu_keyboard
+from persistence import MongoPersistence
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
@@ -93,12 +100,18 @@ async def post_init(application):
 async def post_shutdown(application):
     await telethon_client.disconnect()
 
-def get_application():
+def get_application(use_persistence=True):
     if not BOT_TOKEN:
         logger.error("BOT_TOKEN topilmadi!")
         return None
     
-    application = ApplicationBuilder().token(BOT_TOKEN).post_init(post_init).post_shutdown(post_shutdown).build()
+    builder = ApplicationBuilder().token(BOT_TOKEN).post_init(post_init).post_shutdown(post_shutdown)
+    
+    if use_persistence:
+        persistence = MongoPersistence()
+        builder.persistence(persistence)
+        
+    application = builder.build()
     
     # Handlers
     application.add_handler(CommandHandler("start", start))

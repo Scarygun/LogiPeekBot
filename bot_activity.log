@@ -52571,3 +52571,10 @@ AttributeError: 'int' object has no attribute 'get'
 2026-03-21 12:10:30,730 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8468044431:AAGjyIqE-iMkBokmXQuDF2mAAdDnUSnKIdU/getUpdates "HTTP/1.1 200 OK"
 2026-03-21 12:10:40,847 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8468044431:AAGjyIqE-iMkBokmXQuDF2mAAdDnUSnKIdU/getUpdates "HTTP/1.1 200 OK"
 2026-03-21 12:10:50,962 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8468044431:AAGjyIqE-iMkBokmXQuDF2mAAdDnUSnKIdU/getUpdates "HTTP/1.1 200 OK"
+2026-04-13 22:17:29,185 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
+2026-04-13 22:17:29,445 - telethon_client - INFO - Telethon local session faylidan foydalanilmoqda...
+2026-04-13 22:17:44,022 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
+2026-04-13 22:17:44,209 - telethon_client - INFO - Telethon local session faylidan foydalanilmoqda...
+2026-04-13 22:18:19,894 - telethon.crypto.aes - INFO - libssl detected, it will be used for encryption
+2026-04-13 22:18:20,134 - telethon_client - INFO - Telethon local session faylidan foydalanilmoqda...
+2026-04-13 22:18:21,089 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFbNjqGkqo8lnozx7OEFb0Yj14VeeMTOv8/getMe "HTTP/1.1 200 OK"
