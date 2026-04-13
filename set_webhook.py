@@ -72,5 +72,15 @@ if __name__ == "__main__":
         asyncio.run(set_webhook(sys.argv[2]))
     elif cmd == "delete":
         asyncio.run(delete_webhook())
+    elif cmd == "info":
+        async def get_info():
+            token = os.getenv('BOT_TOKEN')
+            if not token:
+                logger.error("BOT_TOKEN topilmadi!")
+                return
+            bot = Bot(token=token)
+            info = await bot.get_webhook_info()
+            logger.info(f"Hozirgi Webhook ma'lumotlari: {info}")
+        asyncio.run(get_info())
     else:
         print(f"Noma'lum buyruq: {cmd}")
