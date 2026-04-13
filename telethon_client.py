@@ -1,5 +1,4 @@
-import logging
-import asyncio
+import os
 from telethon import TelegramClient
 from telethon.sessions import StringSession
 from telethon.errors import FloodWaitError, SessionPasswordNeededError
@@ -11,9 +10,18 @@ logger = logging.getLogger(__name__)
 
 class CustomTelethonClient:
     def __init__(self):
+        is_vercel = os.getenv('VERCEL')
+        
         if TELETHON_STRING_SESSION:
             logger.info("Telethon StringSession dan foydalanilmoqda...")
             self.client = TelegramClient(StringSession(TELETHON_STRING_SESSION), USER_API_ID, USER_API_HASH)
+        elif is_vercel:
+            # Vercel-da local session fayli ishlatib bo'lmaydi
+            logger.error("XATO: Vercel-da TELETHON_STRING_SESSION bo'lishi shart!")
+            raise RuntimeError(
+                "Vercel-da 'user_session.session' faylini yaratib bo'lmaydi (Read-only filesystem). "
+                "Iltimos, 'TELETHON_STRING_SESSION' environment variable-ni Vercel-ga qo'shing."
+            )
         else:
             logger.info("Telethon local session faylidan foydalanilmoqda...")
             self.client = TelegramClient('user_session', USER_API_ID, USER_API_HASH)
