@@ -7,3 +7,4 @@ google-auth-oauthlib==1.2.2
 pymongo
 dnspython
 python-dotenv
+flask

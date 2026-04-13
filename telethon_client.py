@@ -1,8 +1,9 @@
 import logging
 import asyncio
 from telethon import TelegramClient
+from telethon.sessions import StringSession
 from telethon.errors import FloodWaitError, SessionPasswordNeededError
-from config import USER_API_ID, USER_API_HASH, USER_PHONE_NUMBER
+from config import USER_API_ID, USER_API_HASH, USER_PHONE_NUMBER, TELETHON_STRING_SESSION
 from database import load_groups_from_json
 import re
 
@@ -10,7 +11,12 @@ logger = logging.getLogger(__name__)
 
 class CustomTelethonClient:
     def __init__(self):
-        self.client = TelegramClient('user_session', USER_API_ID, USER_API_HASH)
+        if TELETHON_STRING_SESSION:
+            logger.info("Telethon StringSession dan foydalanilmoqda...")
+            self.client = TelegramClient(StringSession(TELETHON_STRING_SESSION), USER_API_ID, USER_API_HASH)
+        else:
+            logger.info("Telethon local session faylidan foydalanilmoqda...")
+            self.client = TelegramClient('user_session', USER_API_ID, USER_API_HASH)
         self.is_authorizing = False
 
     async def connect(self, send_code=False):

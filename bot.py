@@ -48,81 +48,59 @@ async def post_init(application):
         is_authorized = await telethon_client.connect(send_code=False)
         
         if not is_authorized:
-            print("\n" + "="*50)
-            print("TELETHON AVTORIZATSIYASI TALAB QILINADI")
-            print("Siz 'python login.py' buyrug'ini ishlatib tizimga kirishingiz kerak.")
-            print("="*50)
-            
-            try:
-                # Agar foydalanuvchi terminalda bo'lsa, kodni kiritishga urinib ko'ramiz
-                await telethon_client.connect(send_code=True)
+            # Vercel-da terminal bo'lmaydi, shuning uchun faqat log yozamiz
+            if os.getenv('VERCEL') or os.getenv('NON_INTERACTIVE'):
+                logger.error("Telethon client avtorizatsiyadan o'tmagan! String session yangilang.")
+            else:
+                print("\n" + "="*50)
+                print("TELETHON AVTORIZATSIYASI TALAB QILINADI")
+                print("Siz 'python login.py' buyrug'ini ishlatib tizimga kirishingiz kerak.")
+                print("="*50)
                 
-                import asyncio
-                loop = asyncio.get_running_loop()
-                
-                print("\n>>> Telegram ilovasiga (yoki SMS orqali) kelgan kodni kiriting.")
-                print("(Bekor qilish uchun Ctrl+C bosing)")
-                code = await loop.run_in_executor(None, input, "Kod: ")
-                
-                verification_result = await telethon_client.verify_code(code)
-                
-                if verification_result == True:
-                    logger.info("Telethon client muvaffaqiyatli avtorizatsiyadan o'tdi.")
-                    print("Muvaffaqiyatli! Bot ishga tushmoqda...")
-                elif verification_result == "password_required":
-                    print("\n>>> Ikki bosqichli tekshiruv (2FA) paroli talab qilinadi.")
-                    password = await loop.run_in_executor(None, input, "Parol: ")
-                    if await telethon_client.verify_password(password):
-                        logger.info("Telethon client 2FA orqali muvaffaqiyatli ulandi.")
-                        print("Muvaffaqiyatli! Bot ishga tushmoqda...")
+                try:
+                    # Agar foydalanuvchi terminalda bo'lsa, kodni kiritishga urinib ko'ramiz
+                    await telethon_client.connect(send_code=True)
+                    
+                    import asyncio
+                    loop = asyncio.get_running_loop()
+                    
+                    print("\n>>> Telegram ilovasiga (yoki SMS orqali) kelgan kodni kiriting.")
+                    print("(Bekor qilish uchun Ctrl+C bosing)")
+                    code = await loop.run_in_executor(None, input, "Kod: ")
+                    
+                    verification_result = await telethon_client.verify_code(code)
+                    
+                    if verification_result == True:
+                        logger.info("Telethon client muvaffaqiyatli avtorizatsiyadan o'tdi.")
+                    elif verification_result == "password_required":
+                        print("\n>>> Ikki bosqichli tekshiruv (2FA) paroli talab qilinadi.")
+                        password = await loop.run_in_executor(None, input, "Parol: ")
+                        if await telethon_client.verify_password(password):
+                            logger.info("Telethon client 2FA orqali muvaffaqiyatli ulandi.")
+                        else:
+                            logger.error("Xato! Noto'g'ri parol.")
                     else:
-                        print("Xato! Noto'g'ri parol kiritildi. Bot to'xtatilmoqda.")
-                        import sys
-                        sys.exit(1)
-                else:
-                    print("Xato! Noto'g'ri kod kiritildi. Bot to'xtatilmoqda.")
-                    import sys
-                    sys.exit(1)
-            except telethon.errors.FloodWaitError as e:
-                wait_hours = e.seconds // 3600
-                wait_minutes = (e.seconds % 3600) // 60
-                print("\n" + "!"*50)
-                print("TELEGRAM CHEKLOVI (FLOOD WAIT)")
-                print(f"Kutish vaqti: {e.seconds} soniya (~{wait_hours} soat {wait_minutes} daqiqa).")
-                print("Hozircha tizimga kirib bo'lmaydi. Bot to'xtatilmoqda.")
-                print("!"*50 + "\n")
-                import sys
-                sys.exit(1)
-            except Exception as e:
-                print(f"Avtorizatsiyada xatolik: {e}")
-                print("Iltimos, 'python login.py' buyrug'ini terminalda alohida ishga tushirib ko'ring.")
-                print("Bot to'xtatilmoqda.")
-                import sys
-                sys.exit(1)
+                        logger.error("Xato! Noto'g'ri kod.")
+                except Exception as e:
+                    logger.error(f"Avtorizatsiyada xatolik: {e}")
         else:
             logger.info("Telethon client allaqachon avtorizatsiyadan o'tgan.")
             
         await set_bot_commands(application)
-    except telethon.errors.FloodWaitError as e:
-        wait_hours = e.seconds // 3600
-        wait_minutes = (e.seconds % 3600) // 60
-        print("\n" + "!"*50)
-        print("TELEGRAM CHEKLOVI (FLOOD WAIT)")
-        print(f"Juda ko'p urinishlar tufayli Telegram sizni blokladi.")
-        print(f"Kutish vaqti: {e.seconds} soniya (~{wait_hours} soat {wait_minutes} daqiqa).")
-        print("!"*50 + "\n")
-        logger.error(f"FloodWaitError: {e.seconds} seconds")
     except Exception as e:
         logger.error(f"Bot initialization error: {e}")
 
 async def post_shutdown(application):
     await telethon_client.disconnect()
 
-def main():
+def get_application():
     if not BOT_TOKEN:
         logger.error("BOT_TOKEN topilmadi!")
-        return
+        return None
+    
     application = ApplicationBuilder().token(BOT_TOKEN).post_init(post_init).post_shutdown(post_shutdown).build()
+    
+    # Handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(get_language_conversation_handler())
     application.add_handler(get_search_conversation_handler())
@@ -137,7 +115,15 @@ def main():
     # Admin reply handler for support group
     application.add_handler(MessageHandler(filters.REPLY & filters.Chat(chat_id=SUPPORT_GROUP_ID), handle_admin_reply))
     
-    application.run_polling()
+    return application
+
+def main():
+    application = get_application()
+    if application:
+        application.run_polling()
+
+if __name__ == '__main__':
+    main()
 
 if __name__ == '__main__':
     main()

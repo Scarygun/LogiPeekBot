@@ -37,6 +37,10 @@ BOT_TOKEN = os.getenv('BOT_TOKEN')
 USER_API_ID = int(os.getenv('USER_API_ID', 0))
 USER_API_HASH = os.getenv('USER_API_HASH')
 USER_PHONE_NUMBER = os.getenv('USER_PHONE_NUMBER')
+TELETHON_STRING_SESSION = os.getenv('TELETHON_STRING_SESSION') # Vercel uchun
+
+# Webhook sozlamalari (Vercel uchun)
+WEBHOOK_URL = os.getenv('WEBHOOK_URL')
 
 # Log fayli sozlamalari
 LOG_FILE_NAME = os.getenv('LOG_FILE_NAME', 'bot_activity.log')
