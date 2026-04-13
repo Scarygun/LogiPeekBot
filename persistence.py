@@ -26,14 +26,14 @@ class MongoPersistence(BasePersistence):
             data[user_id] = pickle.loads(doc["data"])
         return data
 
-    async def update_user_data(self, user_id: int, data: Any) -> None:
+    async def update_user_data(self, user_id: int, user_data: Any) -> None:
         """Saves user data into MongoDB."""
-        if not data:
+        if not user_data:
             self.user_data_collection.delete_one({"user_id": user_id})
             return
         self.user_data_collection.replace_one(
             {"user_id": user_id},
-            {"user_id": user_id, "data": pickle.dumps(data)},
+            {"user_id": user_id, "data": pickle.dumps(user_data)},
             upsert=True
         )
 
@@ -45,14 +45,14 @@ class MongoPersistence(BasePersistence):
             data[chat_id] = pickle.loads(doc["data"])
         return data
 
-    async def update_chat_data(self, chat_id: int, data: Any) -> None:
+    async def update_chat_data(self, chat_id: int, chat_data: Any) -> None:
         """Saves chat data into MongoDB."""
-        if not data:
+        if not chat_data:
             self.chat_data_collection.delete_one({"chat_id": chat_id})
             return
         self.chat_data_collection.replace_one(
             {"chat_id": chat_id},
-            {"chat_id": chat_id, "data": pickle.dumps(data)},
+            {"chat_id": chat_id, "data": pickle.dumps(chat_data)},
             upsert=True
         )
 
@@ -63,11 +63,11 @@ class MongoPersistence(BasePersistence):
             return pickle.loads(doc["data"])
         return {}
 
-    async def update_bot_data(self, data: Any) -> None:
+    async def update_bot_data(self, bot_data: Any) -> None:
         """Saves bot data into MongoDB."""
         self.bot_data_collection.replace_one(
             {"_id": "bot_data"},
-            {"data": pickle.dumps(data)},
+            {"data": pickle.dumps(bot_data)},
             upsert=True
         )
 
@@ -127,20 +127,21 @@ class MongoPersistence(BasePersistence):
         """Removes user data from MongoDB."""
         self.user_data_collection.delete_one({"user_id": user_id})
 
-    async def refresh_bot_data(self, data: Any) -> Any:
+    async def refresh_bot_data(self, bot_data: Any) -> Any:
         """Refreshes bot data from MongoDB."""
-        return await self.get_bot_data()
+        db_data = await self.get_bot_data()
+        return db_data if db_data else bot_data
 
-    async def refresh_chat_data(self, chat_id: int, data: Any) -> Any:
+    async def refresh_chat_data(self, chat_id: int, chat_data: Any) -> Any:
         """Refreshes chat data from MongoDB."""
         doc = self.chat_data_collection.find_one({"chat_id": chat_id})
         if doc:
             return pickle.loads(doc["data"])
-        return data
+        return chat_data
 
-    async def refresh_user_data(self, user_id: int, data: Any) -> Any:
+    async def refresh_user_data(self, user_id: int, user_data: Any) -> Any:
         """Refreshes user data from MongoDB."""
         doc = self.user_data_collection.find_one({"user_id": user_id})
         if doc:
             return pickle.loads(doc["data"])
-        return data
+        return user_data
