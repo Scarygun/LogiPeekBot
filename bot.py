@@ -1,3 +1,4 @@
+import asyncio
 import os
 import logging
 import re
@@ -21,13 +22,14 @@ logging.basicConfig(
     handlers=handlers
 )
 logger = logging.getLogger(__name__)
+_background_tasks = set()
 
 from config import BOT_TOKEN, ADMINS, SUPPORT_GROUP_ID
 from telegram import Update
 import telegram
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ChatMemberHandler, CallbackQueryHandler, ContextTypes
 import telethon
-from search_handler import get_search_conversation_handler
+from search_handler import get_search_conversation_handler, handle_search_page_callback
 from admin_handler import get_admin_conversation_handler
 from group_handler import get_group_conversation_handler
 from contact_handler import get_contact_conversation_handler
@@ -48,52 +50,81 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     welcome_message = get_message(context.user_data, "welcome")
     await update.message.reply_text(welcome_message, reply_markup=get_main_menu_keyboard(context.user_data, get_message))
 
+def _track_background_task(task, description: str):
+    _background_tasks.add(task)
+
+    def _on_done(done_task):
+        _background_tasks.discard(done_task)
+        try:
+            done_task.result()
+        except Exception as exc:
+            logger.error("%s xatolik bilan tugadi: %s", description, exc)
+
+    task.add_done_callback(_on_done)
+    return task
+
+def _schedule_background_task(coro, description: str):
+    return _track_background_task(asyncio.create_task(coro), description)
+
+def _is_vercel_runtime() -> bool:
+    return bool(os.getenv('VERCEL'))
+
+def _should_eager_telethon_connect() -> bool:
+    return not _is_vercel_runtime() or os.getenv('EAGER_TELETHON_CONNECT') == '1'
+
+def _should_refresh_bot_commands() -> bool:
+    return os.getenv('FORCE_SET_BOT_COMMANDS') == '1' or not _is_vercel_runtime()
+
 async def post_init(application):
-    init_db()
+    _schedule_background_task(asyncio.to_thread(init_db), "MongoDB indekslarini tayyorlash")
     try:
-        # Avval sessiya bormi-yo'qligini tekshiramiz
-        is_authorized = await telethon_client.connect(send_code=False)
-        
-        if not is_authorized:
-            # Vercel-da terminal bo'lmaydi, shuning uchun faqat log yozamiz
-            if os.getenv('VERCEL') or os.getenv('NON_INTERACTIVE'):
-                logger.error("Telethon client avtorizatsiyadan o'tmagan! String session yangilang.")
-            else:
-                print("\n" + "="*50)
-                print("TELETHON AVTORIZATSIYASI TALAB QILINADI")
-                print("Siz 'python login.py' buyrug'ini ishlatib tizimga kirishingiz kerak.")
-                print("="*50)
-                
-                try:
-                    # Agar foydalanuvchi terminalda bo'lsa, kodni kiritishga urinib ko'ramiz
-                    await telethon_client.connect(send_code=True)
-                    
-                    import asyncio
-                    loop = asyncio.get_running_loop()
-                    
-                    print("\n>>> Telegram ilovasiga (yoki SMS orqali) kelgan kodni kiriting.")
-                    print("(Bekor qilish uchun Ctrl+C bosing)")
-                    code = await loop.run_in_executor(None, input, "Kod: ")
-                    
-                    verification_result = await telethon_client.verify_code(code)
-                    
-                    if verification_result == True:
-                        logger.info("Telethon client muvaffaqiyatli avtorizatsiyadan o'tdi.")
-                    elif verification_result == "password_required":
-                        print("\n>>> Ikki bosqichli tekshiruv (2FA) paroli talab qilinadi.")
-                        password = await loop.run_in_executor(None, input, "Parol: ")
-                        if await telethon_client.verify_password(password):
-                            logger.info("Telethon client 2FA orqali muvaffaqiyatli ulandi.")
+        if _should_eager_telethon_connect():
+            is_authorized = await telethon_client.connect(send_code=False)
+
+            if not is_authorized:
+                # Vercel-da terminal bo'lmaydi, shuning uchun faqat log yozamiz
+                if os.getenv('VERCEL') or os.getenv('NON_INTERACTIVE'):
+                    logger.error("Telethon client avtorizatsiyadan o'tmagan! String session yangilang.")
+                else:
+                    print("\n" + "="*50)
+                    print("TELETHON AVTORIZATSIYASI TALAB QILINADI")
+                    print("Siz 'python login.py' buyrug'ini ishlatib tizimga kirishingiz kerak.")
+                    print("="*50)
+
+                    try:
+                        # Agar foydalanuvchi terminalda bo'lsa, kodni kiritishga urinib ko'ramiz
+                        await telethon_client.connect(send_code=True)
+
+                        loop = asyncio.get_running_loop()
+
+                        print("\n>>> Telegram ilovasiga (yoki SMS orqali) kelgan kodni kiriting.")
+                        print("(Bekor qilish uchun Ctrl+C bosing)")
+                        code = await loop.run_in_executor(None, input, "Kod: ")
+
+                        verification_result = await telethon_client.verify_code(code)
+
+                        if verification_result == True:
+                            logger.info("Telethon client muvaffaqiyatli avtorizatsiyadan o'tdi.")
+                        elif verification_result == "password_required":
+                            print("\n>>> Ikki bosqichli tekshiruv (2FA) paroli talab qilinadi.")
+                            password = await loop.run_in_executor(None, input, "Parol: ")
+                            if await telethon_client.verify_password(password):
+                                logger.info("Telethon client 2FA orqali muvaffaqiyatli ulandi.")
+                            else:
+                                logger.error("Xato! Noto'g'ri parol.")
                         else:
-                            logger.error("Xato! Noto'g'ri parol.")
-                    else:
-                        logger.error("Xato! Noto'g'ri kod.")
-                except Exception as e:
-                    logger.error(f"Avtorizatsiyada xatolik: {e}")
+                            logger.error("Xato! Noto'g'ri kod.")
+                    except Exception as e:
+                        logger.error(f"Avtorizatsiyada xatolik: {e}")
+            else:
+                logger.info("Telethon client allaqachon avtorizatsiyadan o'tgan.")
         else:
-            logger.info("Telethon client allaqachon avtorizatsiyadan o'tgan.")
-            
-        await set_bot_commands(application)
+            logger.info("Vercel startup tezroq bo'lishi uchun Telethon lazy connect rejimida qoldirildi.")
+
+        if _should_refresh_bot_commands():
+            await set_bot_commands(application)
+        else:
+            logger.info("Vercel startup tezligi uchun set_my_commands o'tkazib yuborildi. Zarur bo'lsa FORCE_SET_BOT_COMMANDS=1 ishlating.")
     except Exception as e:
         logger.error(f"Bot initialization error: {e}")
 
@@ -117,6 +148,7 @@ def get_application(use_persistence=True):
     application.add_handler(CommandHandler("start", start))
     application.add_handler(get_language_conversation_handler())
     application.add_handler(get_search_conversation_handler())
+    application.add_handler(CallbackQueryHandler(handle_search_page_callback, pattern=r"^search_"))
     application.add_handler(get_admin_conversation_handler())
     application.add_handler(get_group_conversation_handler())
     application.add_handler(get_contact_conversation_handler())
@@ -134,9 +166,6 @@ def main():
     application = get_application()
     if application:
         application.run_polling()
-
-if __name__ == '__main__':
-    main()
 
 if __name__ == '__main__':
     main()

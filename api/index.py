@@ -2,6 +2,7 @@ import os
 import asyncio
 import logging
 import traceback
+from threading import Lock
 from flask import Flask, request
 from telegram import Update
 from bot import get_application
@@ -18,6 +19,8 @@ app = Flask(__name__)
 
 # Global application instance
 _application = None
+_loop = asyncio.new_event_loop()
+_loop_lock = Lock()
 
 async def get_app_instance():
     global _application
@@ -31,6 +34,9 @@ async def get_app_instance():
             # Initialize the PTB application
             _application = get_application(use_persistence=True)
             await _application.initialize()
+            if _application.post_init:
+                logger.info("Running PTB post_init hook for webhook mode...")
+                await _application.post_init(_application)
             await _application.start()
             logger.info("Bot application initialized and started successfully.")
         except Exception as e:
@@ -46,20 +52,15 @@ def webhook():
     try:
         update_data = request.get_json(force=True)
         logger.info(f"Received update: {update_data.get('update_id')}")
-        
-        # Create or use current event loop
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            
-        application = loop.run_until_complete(get_app_instance())
-        if not application:
-            return 'Bot Not Initialized', 500
-            
-        update = Update.de_json(update_data, application.bot)
-        loop.run_until_complete(application.process_update(update))
+
+        with _loop_lock:
+            asyncio.set_event_loop(_loop)
+            application = _loop.run_until_complete(get_app_instance())
+            if not application:
+                return 'Bot Not Initialized', 500
+
+            update = Update.de_json(update_data, application.bot)
+            _loop.run_until_complete(application.process_update(update))
         
         return 'OK', 200
     except Exception as e:

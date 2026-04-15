@@ -2,6 +2,7 @@ import asyncio
 import logging
 import json
 import re
+import time
 from datetime import datetime
 from typing import Optional, Union, List, Dict
 from pymongo import MongoClient
@@ -12,6 +13,9 @@ logger = logging.getLogger(__name__)
 # MongoDB Client Initialization
 _client = None
 _db = None
+_GROUPS_CACHE_TTL_SECONDS = 60
+_groups_cache: List[str] = []
+_groups_cache_expires_at = 0.0
 
 def get_db():
     global _client, _db
@@ -19,6 +23,18 @@ def get_db():
         _client = MongoClient(MONGODB_URI)
         _db = _client[DATABASE_NAME_MONGO]
     return _db
+
+def _invalidate_groups_cache():
+    global _groups_cache, _groups_cache_expires_at
+    _groups_cache = []
+    _groups_cache_expires_at = 0.0
+
+def _load_group_links_sync() -> List[str]:
+    return [
+        doc.get("group_link")
+        for doc in get_db().groups.find({}, {"group_link": 1})
+        if doc.get("group_link")
+    ]
 
 def init_db():
     """Initializes MongoDB indices for performance and uniqueness."""
@@ -178,6 +194,7 @@ async def add_group(chat_id: Union[int, str], title: Optional[str], group_link: 
             {"$set": update, "$setOnInsert": {"added_date": datetime.now().isoformat()}},
             upsert=True
         )
+        _invalidate_groups_cache()
         return True
     return await asyncio.to_thread(_add)
 
@@ -188,6 +205,7 @@ async def remove_group(chat_id: Union[int, str]):
         except (ValueError, TypeError):
             chat_id_clean = chat_id
         get_db().groups.delete_one({"group_id": chat_id_clean})
+        _invalidate_groups_cache()
     await asyncio.to_thread(_remove)
 
 async def get_all_groups() -> list:
@@ -205,9 +223,16 @@ async def get_group_count():
 # Aliases for group functions that previously used JSON
 async def load_groups_from_json() -> list:
     """Returns list of links for compatibility."""
-    def _load():
-        return [doc.get('group_link') for doc in get_db().groups.find() if doc.get('group_link')]
-    return await asyncio.to_thread(_load)
+    global _groups_cache, _groups_cache_expires_at
+
+    now = time.monotonic()
+    if _groups_cache_expires_at > now:
+        return list(_groups_cache)
+
+    group_links = await asyncio.to_thread(_load_group_links_sync)
+    _groups_cache = group_links
+    _groups_cache_expires_at = now + _GROUPS_CACHE_TTL_SECONDS
+    return list(group_links)
 
 async def get_group_count_from_json() -> int:
     def _count():
@@ -259,4 +284,5 @@ async def remove_group_from_json(group_id: str):
             get_db().groups.delete_one({"group_id": cid})
         except:
             get_db().groups.delete_one({"$or": [{"group_id": group_id}, {"group_link": {"$regex": group_id}}]})
+        _invalidate_groups_cache()
     await asyncio.to_thread(_remove)

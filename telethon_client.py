@@ -1,4 +1,5 @@
 import os
+import logging
 from telethon import TelegramClient
 from telethon.sessions import StringSession
 from telethon.errors import FloodWaitError, SessionPasswordNeededError
@@ -26,6 +27,7 @@ class CustomTelethonClient:
             logger.info("Telethon local session faylidan foydalanilmoqda...")
             self.client = TelegramClient('user_session', USER_API_ID, USER_API_HASH)
         self.is_authorizing = False
+        self.entity_cache = {}
 
     async def connect(self, send_code=False):
         if not self.client.is_connected():
@@ -62,6 +64,15 @@ class CustomTelethonClient:
 
     def is_connected(self):
         return self.client.is_connected()
+
+    async def _get_cached_entity(self, username):
+        entity = self.entity_cache.get(username)
+        if entity is not None:
+            return entity
+
+        entity = await self.client.get_entity(username)
+        self.entity_cache[username] = entity
+        return entity
 
     async def verify_code(self, code):
         if not self.is_authorizing:
@@ -110,29 +121,44 @@ class CustomTelethonClient:
         groups = await load_groups_from_json()
         if not groups:
             return []
-        
+
         all_results = []
         query = f"{from_city} {to_city}"
         seen_texts = set()
-        
-        # Simplified search logic for brevity
-        for group_link in groups:
+        from_city_lower = from_city.lower()
+        to_city_lower = to_city.lower()
+        total_groups = len(groups)
+        progress_every = 5
+        per_group_limit = max(1, min(limit, 10))
+
+        for index, group_link in enumerate(groups, start=1):
             username = self._extract_username(group_link)
-            if not username: continue
+            if not username:
+                if progress_callback and (index % progress_every == 0 or index == total_groups):
+                    await progress_callback(index, total_groups, all_results)
+                continue
             try:
-                entity = await self.client.get_entity(username)
-                async for message in self.client.iter_messages(entity, search=query, limit=10):
-                    if message.text and (from_city.lower() in message.text.lower() and to_city.lower() in message.text.lower()):
-                        if message.text in seen_texts: continue
-                        seen_texts.add(message.text)
+                entity = await self._get_cached_entity(username)
+                async for message in self.client.iter_messages(entity, search=query, limit=per_group_limit):
+                    message_text = message.text
+                    if message_text:
+                        message_text_lower = message_text.lower()
+                        if from_city_lower not in message_text_lower or to_city_lower not in message_text_lower:
+                            continue
+                        if message_text in seen_texts:
+                            continue
+                        seen_texts.add(message_text)
                         all_results.append({
                             'group_title': entity.title,
-                            'text': message.text,
+                            'text': message_text,
                             'date': message.date.strftime("%Y-%m-%d %H:%M"),
                             'link': f"https://t.me/{username}/{message.id}"
                         })
-            except:
-                continue
+            except Exception as exc:
+                logger.debug("Qidiruvda %s guruhi o'tkazib yuborildi: %s", username, exc)
+
+            if progress_callback and (index % progress_every == 0 or index == total_groups):
+                await progress_callback(index, total_groups, all_results)
         return all_results
 
 telethon_client = CustomTelethonClient()

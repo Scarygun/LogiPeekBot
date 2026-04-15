@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.session
+*.log
+.env
+.git/
+scratch/

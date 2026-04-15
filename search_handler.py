@@ -18,6 +18,12 @@ from datetime import datetime
 
 # Yuk qidirishni boshlash
 async def start_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if telethon_client and not telethon_client.is_connected():
+        try:
+            await telethon_client.connect(send_code=False)
+        except Exception as e:
+            logger.error(f"Telethon clientni qidiruv oldidan ulashda xatolik: {e}")
+
     if not telethon_client or not telethon_client.is_connected():
         await update.message.reply_text(
             get_message(context.user_data, "search_error_telethon_not_connected"),
@@ -134,6 +140,7 @@ async def process_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     to_city = text
     from_city = context.user_data.get('from_city', '')
+    context.user_data['to_city'] = to_city
     
     # Yuklash xabarini yuborish
     loading_msg = await update.message.reply_text(
@@ -209,7 +216,9 @@ async def process_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
     finally:
         # Tozalash
         context.user_data.pop('progress_message_id', None)
+        context.user_data.pop('last_progress_text', None)
         context.user_data.pop('previous_progress_results', None)
+        context.user_data.pop('to_city', None)
     
     return ConversationHandler.END
 
