@@ -39,6 +39,10 @@ USER_API_HASH = os.getenv('USER_API_HASH')
 USER_PHONE_NUMBER = os.getenv('USER_PHONE_NUMBER')
 TELETHON_STRING_SESSION = os.getenv('TELETHON_STRING_SESSION') # Vercel uchun
 
+# TextUP SMS API sozlamalari
+TEXTUP_EMAIL = os.getenv('TEXTUP_EMAIL', os.getenv('TEXTUP_API_KEY', ''))
+TEXTUP_PASSWORD = os.getenv('TEXTUP_PASSWORD', os.getenv('TEXTUP_API_SECRET', ''))
+
 # Webhook sozlamalari (Vercel uchun)
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
 

@@ -1,10 +1,8 @@
 import asyncio
 import logging
-import json
-import re
 import time
 from datetime import datetime
-from typing import Optional, Union, List, Dict
+from typing import Optional, Union, List
 from pymongo import MongoClient
 from config import MONGODB_URI, DATABASE_NAME_MONGO
 
@@ -118,23 +116,28 @@ async def update_balance(user_id: Union[int, str], amount: float) -> bool:
 
 # ========== CONTACT FUNCTIONS ==========
 
-async def add_contact(user_id: int, username: Optional[str], full_name: Optional[str], phone_number: Optional[str]):
+async def add_contact(user_id: Union[int, str], username: Optional[str], full_name: Optional[str], phone_number: Optional[str]):
     def _add():
         db = get_db()
-        db.contacts.update_one(
-            {"user_id": user_id},
-            {"$set": {
-                "username": username,
-                "full_name": full_name,
-                "phone_number": phone_number,
-                "updated_at": datetime.now().isoformat()
-            }, "$setOnInsert": {
-                "added_date": datetime.now().isoformat(),
-                "balance": 0.0
-            }},
-            upsert=True
-        )
-        return True
+        from pymongo.errors import DuplicateKeyError
+        try:
+            db.contacts.update_one(
+                {"user_id": user_id},
+                {"$set": {
+                    "username": username,
+                    "full_name": full_name,
+                    "phone_number": phone_number,
+                    "updated_at": datetime.now().isoformat()
+                }, "$setOnInsert": {
+                    "added_date": datetime.now().isoformat(),
+                    "balance": 0.0
+                }},
+                upsert=True
+            )
+            return True
+        except DuplicateKeyError:
+            # Agar nomer bazada allaqachon bo'lsa (boshqa user_id bilan), baribir True qaytaramiz (SMS ketishi uchun)
+            return True
     return await asyncio.to_thread(_add)
 
 async def get_all_contacts():

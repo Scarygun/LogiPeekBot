@@ -1,10 +1,7 @@
 import asyncio
 import os
 import logging
-import re
 from config import LOG_FILE_NAME
-from typing import Optional
-from datetime import datetime
 
 # Log konfiguratsiyasi
 handlers = [logging.StreamHandler()]
@@ -24,11 +21,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 _background_tasks = set()
 
-from config import BOT_TOKEN, ADMINS, SUPPORT_GROUP_ID
+from config import BOT_TOKEN, SUPPORT_GROUP_ID
 from telegram import Update
-import telegram
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ChatMemberHandler, CallbackQueryHandler, ContextTypes
-import telethon
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes
 from search_handler import get_search_conversation_handler, handle_search_page_callback
 from admin_handler import get_admin_conversation_handler
 from group_handler import get_group_conversation_handler
@@ -37,6 +32,7 @@ from help_handler import get_help_conversation_handler, handle_admin_reply
 from feedback_handler import get_feedback_conversation_handler
 from broadcast_handler import get_broadcast_conversation_handler
 from balance_handler import get_balance_handler
+from sms_handler import get_sms_conversation_handler
 from telethon_client import telethon_client
 from database import init_db, add_user_to_json
 from menu import set_bot_commands
@@ -156,6 +152,7 @@ def get_application(use_persistence=True):
     application.add_handler(get_feedback_conversation_handler())
     application.add_handler(get_broadcast_conversation_handler())
     application.add_handler(get_balance_handler())
+    application.add_handler(get_sms_conversation_handler())
     
     # Admin reply handler for support group
     application.add_handler(MessageHandler(filters.REPLY & filters.Chat(chat_id=SUPPORT_GROUP_ID), handle_admin_reply))

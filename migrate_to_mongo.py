@@ -1,7 +1,7 @@
 import sqlite3
 import json
 import os
-import re
+
 from pymongo import MongoClient
 from datetime import datetime
 from config import (

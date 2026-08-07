@@ -40,7 +40,6 @@ async def process_group(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # Guruh ma'lumotlarini tahlil qilish
     group_id = group_info
-    group_name = group_info
     group_link = None
     username = None
 

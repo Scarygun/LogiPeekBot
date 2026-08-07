@@ -1,8 +1,8 @@
 import asyncio
 import re
 import logging
-from telegram import Update, Message, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ContextTypes, MessageHandler, filters, CallbackQueryHandler, CommandHandler
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ContextTypes, MessageHandler, filters, CommandHandler
 from telegram.ext import ConversationHandler
 from telegram.error import NetworkError
 from states import SearchStates
@@ -14,7 +14,6 @@ from keyboards import get_main_menu_keyboard, get_back_keyboard
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 import html
-from datetime import datetime
 
 # Yuk qidirishni boshlash
 async def start_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -88,7 +87,7 @@ async def progress_callback(current_count, total_count, current_results, update,
                         parse_mode="HTML"
                     )
                     context.user_data['last_progress_text'] = progress_text
-            except Exception as e:
+            except Exception:
                 # Agar xabar tahrirlashda xatolik bo'lsa (masalan xabar o'chirilgan), yangi xabar yuboramiz
                 # Lekin ko'p xatolik bo'lmasligi uchun pass qilamiz yoki log yozamiz
                 # logger.warning(f"Progress xabarini tahrirlashda xatolik: {e}")
@@ -105,7 +104,7 @@ async def progress_callback(current_count, total_count, current_results, update,
                     )
                     context.user_data['progress_message_id'] = loading_msg.message_id
                     context.user_data['last_progress_text'] = progress_text
-                except Exception as e:
+                except Exception:
                     # Agar loading xabarini ham tahrirlab bo'lmasa, yangi xabar yuboramiz
                     try:
                         sent_msg = await update.message.reply_text(
@@ -275,12 +274,12 @@ async def show_search_results(update: Update, context: ContextTypes.DEFAULT_TYPE
             snippet += "..."
              
         item_text = get_message(context.user_data, "search_result_item_list", 
-                                idx=actual_idx, 
+                idx=actual_idx, 
                                 title=html.escape(group_title),
                                 text=html.escape(snippet))
         message_text += item_text + "\n\n"
-        
-    message_text += f"\n{html.escape(str(datetime.now().strftime('%H:%M')))}" # Vaqtni qo'shish (ixtiyoriy)
+
+    message_text += "<b><a href=\"https://t.me/logi_peek_bot\">🗺 Barcha yuklar xaritada</a></b>"
 
     # 3. Tugmalarni yaratish
     keyboard = []

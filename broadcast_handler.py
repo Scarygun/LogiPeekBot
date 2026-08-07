@@ -21,7 +21,7 @@ from telethon.errors import (
 )
 
 from language_handler import get_message
-from database import get_all_groups, load_groups_from_json
+from database import load_groups_from_json
 from config import ADMINS, ACTIVE_GROUPS_JSON_FILE
 from telethon_client import telethon_client
 
@@ -62,21 +62,6 @@ def is_broadcast_active(admin_id: int) -> bool:
     return bool(state and state.get("active"))
 
 
-async def load_active_groups() -> list:
-    def _load() -> list:
-        if not ACTIVE_GROUPS_PATH.exists():
-            return []
-        try:
-            with ACTIVE_GROUPS_PATH.open("r", encoding="utf-8") as f:
-                data = json.load(f)
-            if isinstance(data, list):
-                return data
-        except (json.JSONDecodeError, OSError):
-            logger.warning("active_groups.json ni o'qishda xatolik. Bo'sh ro'yxat qaytarilmoqda.")
-        return []
-
-    return await asyncio.to_thread(_load)
-
 
 async def save_active_groups(groups: list) -> None:
     def _save(items: list) -> None:
@@ -112,7 +97,7 @@ async def get_target_groups() -> list:
     # Agar dict formatida bo'lsa (eski format)
     if isinstance(groups_data, dict):
         group_links = []
-        for group_key, group_data in groups_data.items():
+        for _, group_data in groups_data.items():
             if isinstance(group_data, dict) and 'group_link' in group_data:
                 group_link = group_data['group_link']
                 if group_link and isinstance(group_link, str):
@@ -522,7 +507,7 @@ async def xabar_yuborish(
                         retry = False
                         await sleep_with_cancel(0.3, admin_id, step=0.3)
                         
-                    except (UsernameNotOccupiedError, UsernameInvalidError) as e:
+                    except (UsernameNotOccupiedError, UsernameInvalidError):
                         # Username mavjud emas yoki noto'g'ri format
                         error_reason = "Guruh topilmadi yoki noto'g'ri format"
                         logger.warning(f"❌ @{display_name}: {error_reason}")

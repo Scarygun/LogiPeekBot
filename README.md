@@ -3,3 +3,4 @@
 # LogiPeekBot
 # LogiPeekBot
 # LogiPeekBot
+# logipeek-bot

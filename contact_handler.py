@@ -5,6 +5,8 @@ from telegram.ext import ContextTypes, ConversationHandler, MessageHandler, filt
 from database import add_contact # database modulini import qilamiz
 from language_handler import get_message
 from keyboards import get_main_menu_keyboard, get_back_keyboard
+from config import TEXTUP_EMAIL, TEXTUP_PASSWORD
+from textup_client import TextUpClient, TextUpAPIError, TextUpAuthError
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +39,6 @@ async def process_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return ConversationHandler.END
 
     contact_info = text
-    user_id = str(update.effective_user.id) # Kontakt qo'shayotgan foydalanuvchining ID si
-    
     # Telefon raqamini ajratib olish
     contact_phone_number = contact_info
     contact_user_id = contact_info
@@ -67,6 +67,30 @@ async def process_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
             get_message(context.user_data, "contact_add_success", contact_info=contact_info),
             parse_mode="Markdown"
         )
+        
+        # SMS yuborish logikasi
+        if re.match(phone_pattern, cleaned_phone):
+            try:
+                client = TextUpClient(TEXTUP_EMAIL, TEXTUP_PASSWORD)
+                tpl_data = await client.get_templates()
+                templates = tpl_data.get("templates", [])
+                active_tpl = [t for t in templates if t.get("status") in ("active", "approved", "in_verify")]
+                
+                if active_tpl:
+                    # Birinchi tasdiqlangan shablonni olamiz
+                    template = active_tpl[0]
+                    sms_id = await client.send_sms(
+                        template_id=template["id"],
+                        message=template.get("content", ""),
+                        recipients=[contact_phone_number]
+                    )
+                    logger.info("Avtomatik SMS yuborildi: %s", sms_id)
+                    # Qo'shimcha xabar
+                    await update.message.reply_text("✅ Taklifnoma SMS xabari yuborildi.")
+                else:
+                    logger.warning("SMS yuborish uchun faol shablon topilmadi.")
+            except (TextUpAuthError, TextUpAPIError) as e:
+                logger.error("Avtomatik SMS yuborishda xatolik: %s", e)
     else:
         await update.message.reply_text(
             get_message(context.user_data, "contact_add_error"),

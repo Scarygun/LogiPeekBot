@@ -1,13 +1,11 @@
 import logging
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
+from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler, ConversationHandler, MessageHandler, filters, CallbackQueryHandler
 from config import ADMINS
-from config import ADMINS
-from database import get_all_groups, get_all_contacts, get_group_count, get_contact_count, log_admin_action, get_all_feedback, get_user_count_from_json, get_group_count_from_json, get_contact_count_from_json, load_contacts_from_json, load_groups_from_json, load_users_from_json # Yangilangan importlar
+from database import log_admin_action, get_all_feedback, get_user_count_from_json, get_group_count_from_json, get_contact_count_from_json, load_contacts_from_json, load_groups_from_json, load_users_from_json
 from language_handler import get_message
 from keyboards import get_main_menu_keyboard, get_back_keyboard
-import re # Yangi import
-from config import ADMINS
+import re
 from datetime import datetime
 
 import html # Yangi import
@@ -27,10 +25,7 @@ def get_admin_main_menu_keyboard():
 # Admin panel holatlari
 class AdminStates:
     MAIN_MENU = 1
-    VIEW_GROUPS = 2
-    VIEW_CONTACTS = 3
     ADD_BALANCE = 4
-    VIEW_FEEDBACK = 5
 
 # Admin ekanligini tekshirish
 def is_admin(user_id):
@@ -366,17 +361,13 @@ async def admin_groups_pagination_handler(update: Update, context: ContextTypes.
     data = query.data
     
     if data == "admin_groups_menu":
-        # Bosh menyuga qaytish
-        # Xabarni o'chirish yoki tahrirlash
         try:
             await query.message.delete()
         except:
             pass
             
-        # Yangi menyu xabarini yuborish
         reply_markup = get_admin_main_menu_keyboard()
         
-        # HTML taglarni olib tashlaymiz va Markdown bold qilamiz
         welcome_msg = get_message({'language': 'uz'}, "admin_panel_welcome").replace("<b>", "").replace("</b>", "")
         if "Admin-panel" in welcome_msg:
              welcome_msg = welcome_msg.replace("Admin-panel", "*Admin-panel*")
@@ -405,8 +396,6 @@ async def show_admin_contacts(update: Update, context: ContextTypes.DEFAULT_TYPE
         except:
             pass
             
-    user_id = update.effective_user.id
-    
     # Kontaktlar dict formatida
     contacts_dict = context.user_data.get('admin_contacts', {})
     
@@ -477,7 +466,6 @@ async def admin_contacts_pagination_handler(update: Update, context: ContextType
     data = query.data
     
     if data == "admin_contacts_menu":
-        # Bosh menyuga qaytish
         try:
             await query.message.delete()
         except:
