@@ -61912,3 +61912,91 @@ pymongo.errors.DuplicateKeyError: E11000 duplicate key error collection: logipee
 2026-08-07 17:47:21,214 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
 2026-08-07 17:47:31,358 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
 2026-08-07 17:47:41,518 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:47:51,661 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:47:57,945 - telethon.network.connection.connection - WARNING - Server closed the connection: [Errno 60] Operation timed out
+2026-08-07 17:47:57,946 - telethon.network.connection.connection - WARNING - Server closed the connection: [Errno 60] Operation timed out
+2026-08-07 17:47:57,946 - telethon.network.mtprotosender - INFO - Connection closed while receiving data
+2026-08-07 17:47:57,946 - telethon.network.connection.connection - WARNING - Server closed the connection: [Errno 60] Operation timed out
+2026-08-07 17:47:57,947 - telethon.network.mtprotosender - INFO - Closing current connection to begin reconnect...
+2026-08-07 17:47:57,947 - telethon.network.connection.connection - INFO - <class 'TimeoutError'> during disconnect: [Errno 60] Operation timed out
+2026-08-07 17:47:57,947 - telethon.network.connection.connection - INFO - <class 'TimeoutError'> during disconnect: [Errno 60] Operation timed out
+2026-08-07 17:47:57,948 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
+2026-08-07 17:47:58,475 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
+2026-08-07 17:47:58,475 - telethon.network.mtprotosender - INFO - Connection closed while receiving data
+2026-08-07 17:47:58,475 - telethon.network.mtprotosender - INFO - Closing current connection to begin reconnect...
+2026-08-07 17:47:58,475 - telethon.network.mtprotosender - INFO - Connection closed while sending data
+2026-08-07 17:47:58,476 - telethon.network.mtprotosender - INFO - Connecting to 149.154.167.51:443/TcpFull...
+2026-08-07 17:47:58,885 - telethon.network.mtprotosender - INFO - Connection to 149.154.167.51:443/TcpFull complete!
+2026-08-07 17:48:01,813 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:48:11,936 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:48:22,075 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:48:32,548 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:48:40,544 - telethon.client.updates - INFO - Got difference for channel 1493202677 updates
+2026-08-07 17:48:42,753 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:48:52,964 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:49:03,093 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:49:13,234 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:49:23,365 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:49:33,529 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:49:43,689 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:49:53,894 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:50:04,033 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:50:14,174 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:50:24,317 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:50:34,455 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:50:44,596 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:50:54,730 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:51:04,965 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:51:15,125 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:51:25,273 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:51:35,418 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:51:38,245 - telethon.client.updates - INFO - Got difference for channel 1321095255 updates
+2026-08-07 17:51:45,559 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:51:55,688 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:52:05,862 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:52:15,990 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:52:26,120 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:52:36,256 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:52:46,400 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:52:56,538 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:53:06,716 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:53:16,866 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:53:27,009 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:53:37,131 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:53:47,274 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:53:57,411 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:54:00,701 - telethon.client.updates - INFO - Got difference for channel 1493202677 updates
+2026-08-07 17:54:02,926 - telethon.client.updates - INFO - Got difference for channel 1346305167 updates
+2026-08-07 17:54:07,586 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:54:17,723 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:54:27,851 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:54:37,800 - telethon.client.updates - INFO - Got difference for channel 1400319594 updates
+2026-08-07 17:54:37,988 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:54:48,138 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:54:55,556 - telethon.client.updates - INFO - Got difference for channel 1400319594 updates
+2026-08-07 17:54:58,283 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:55:08,473 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:55:10,147 - telethon.client.updates - INFO - Got difference for channel 1400319594 updates
+2026-08-07 17:55:17,960 - telethon.client.updates - INFO - Got difference for channel 1346305167 updates
+2026-08-07 17:55:18,627 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:55:26,523 - telethon.client.updates - INFO - Got difference for channel 1400319594 updates
+2026-08-07 17:55:28,754 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:55:38,900 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:55:49,325 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:55:49,887 - telethon.client.updates - INFO - Got difference for channel 3558852058 updates
+2026-08-07 17:55:59,479 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:56:10,066 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:56:20,444 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:56:30,661 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:56:40,816 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:56:51,953 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:57:02,085 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:57:12,466 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:57:22,887 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:57:33,174 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:57:43,620 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:57:54,283 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:57:59,814 - telethon.client.updates - INFO - Got difference for channel 1695293212 updates
+2026-08-07 17:58:04,513 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:58:15,459 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8321048668:AAFZoLBQUHCz3kkGIabKSQ6pzCn_OHwUZzQ/getUpdates "HTTP/1.1 200 OK"
+2026-08-07 17:58:20,404 - telethon.client.updates - INFO - Got difference for channel 1834947861 updates
