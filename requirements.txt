@@ -9,3 +9,4 @@ dnspython
 python-dotenv
 flask
 cryptg
+aiohttp

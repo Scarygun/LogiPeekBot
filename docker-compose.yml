@@ -1,0 +1,19 @@
+services:
+  telegram_bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: telegram_bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      # Ma'lumotlar va sessiyalar serverda doimiy saqlanishi uchun (Data Persistence)
+      - ./users.json:/app/users.json
+      - ./payments.json:/app/payments.json
+      - ./bot_data.pickle:/app/bot_data.pickle
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

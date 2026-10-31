@@ -21,30 +21,50 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 _background_tasks = set()
 
-from config import BOT_TOKEN, SUPPORT_GROUP_ID
+from config import BOT_TOKEN, OWNER_ID
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes
 from search_handler import get_search_conversation_handler, handle_search_page_callback
-from admin_handler import get_admin_conversation_handler
-from group_handler import get_group_conversation_handler
-from contact_handler import get_contact_conversation_handler
+
 from help_handler import get_help_conversation_handler, handle_admin_reply
-from feedback_handler import get_feedback_conversation_handler
-from broadcast_handler import get_broadcast_conversation_handler
 from balance_handler import get_balance_handler
-from sms_handler import get_sms_conversation_handler
-from telethon_client import telethon_client
+from login_handler import get_login_conversation_handler
+from register_handler import get_register_conversation_handler
+from forgot_password_handler import get_forgot_password_conversation_handler
+from profile_handler import get_profile_handler, handle_profile_callback
 from database import init_db, add_user_to_json
 from menu import set_bot_commands
 from language_handler import get_message, get_language_conversation_handler
 from keyboards import get_main_menu_keyboard
-from persistence import MongoPersistence
+from telegram.ext import PicklePersistence
+
+from database import _read_json
+from config import USERS_JSON_FILE
+from keyboards import get_auth_keyboard
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     await add_user_to_json(user.id, user.username)
     welcome_message = get_message(context.user_data, "welcome")
-    await update.message.reply_text(welcome_message, reply_markup=get_main_menu_keyboard(context.user_data, get_message))
+    
+    # Check if user is logged in
+    users = _read_json(USERS_JSON_FILE, [])
+    is_logged_in = False
+    if isinstance(users, list):
+        for u in users:
+            if str(u.get("user_id")) == str(user.id) and u.get("vigo_phone"):
+                is_logged_in = True
+                break
+    elif isinstance(users, dict):
+        if str(user.id) in users and users[str(user.id)].get("vigo_phone"):
+            is_logged_in = True
+
+    if is_logged_in:
+        reply_markup = get_main_menu_keyboard(context.user_data, get_message)
+    else:
+        reply_markup = get_auth_keyboard(context.user_data, get_message)
+        
+    await update.message.reply_text(welcome_message, reply_markup=reply_markup)
 
 def _track_background_task(task, description: str):
     _background_tasks.add(task)
@@ -65,58 +85,17 @@ def _schedule_background_task(coro, description: str):
 def _is_vercel_runtime() -> bool:
     return bool(os.getenv('VERCEL'))
 
-def _should_eager_telethon_connect() -> bool:
-    return not _is_vercel_runtime() or os.getenv('EAGER_TELETHON_CONNECT') == '1'
-
 def _should_refresh_bot_commands() -> bool:
     return os.getenv('FORCE_SET_BOT_COMMANDS') == '1' or not _is_vercel_runtime()
 
+
+
+from payment_checker import payment_checker_job
+
 async def post_init(application):
     _schedule_background_task(asyncio.to_thread(init_db), "MongoDB indekslarini tayyorlash")
+    _schedule_background_task(payment_checker_job(application), "Backend to'lovlarini tekshirish")
     try:
-        if _should_eager_telethon_connect():
-            is_authorized = await telethon_client.connect(send_code=False)
-
-            if not is_authorized:
-                # Vercel-da terminal bo'lmaydi, shuning uchun faqat log yozamiz
-                if os.getenv('VERCEL') or os.getenv('NON_INTERACTIVE'):
-                    logger.error("Telethon client avtorizatsiyadan o'tmagan! String session yangilang.")
-                else:
-                    print("\n" + "="*50)
-                    print("TELETHON AVTORIZATSIYASI TALAB QILINADI")
-                    print("Siz 'python login.py' buyrug'ini ishlatib tizimga kirishingiz kerak.")
-                    print("="*50)
-
-                    try:
-                        # Agar foydalanuvchi terminalda bo'lsa, kodni kiritishga urinib ko'ramiz
-                        await telethon_client.connect(send_code=True)
-
-                        loop = asyncio.get_running_loop()
-
-                        print("\n>>> Telegram ilovasiga (yoki SMS orqali) kelgan kodni kiriting.")
-                        print("(Bekor qilish uchun Ctrl+C bosing)")
-                        code = await loop.run_in_executor(None, input, "Kod: ")
-
-                        verification_result = await telethon_client.verify_code(code)
-
-                        if verification_result == True:
-                            logger.info("Telethon client muvaffaqiyatli avtorizatsiyadan o'tdi.")
-                        elif verification_result == "password_required":
-                            print("\n>>> Ikki bosqichli tekshiruv (2FA) paroli talab qilinadi.")
-                            password = await loop.run_in_executor(None, input, "Parol: ")
-                            if await telethon_client.verify_password(password):
-                                logger.info("Telethon client 2FA orqali muvaffaqiyatli ulandi.")
-                            else:
-                                logger.error("Xato! Noto'g'ri parol.")
-                        else:
-                            logger.error("Xato! Noto'g'ri kod.")
-                    except Exception as e:
-                        logger.error(f"Avtorizatsiyada xatolik: {e}")
-            else:
-                logger.info("Telethon client allaqachon avtorizatsiyadan o'tgan.")
-        else:
-            logger.info("Vercel startup tezroq bo'lishi uchun Telethon lazy connect rejimida qoldirildi.")
-
         if _should_refresh_bot_commands():
             await set_bot_commands(application)
         else:
@@ -125,7 +104,7 @@ async def post_init(application):
         logger.error(f"Bot initialization error: {e}")
 
 async def post_shutdown(application):
-    await telethon_client.disconnect()
+    pass
 
 def get_application(use_persistence=True):
     if not BOT_TOKEN:
@@ -135,7 +114,7 @@ def get_application(use_persistence=True):
     builder = ApplicationBuilder().token(BOT_TOKEN).post_init(post_init).post_shutdown(post_shutdown)
     
     if use_persistence:
-        persistence = MongoPersistence()
+        persistence = PicklePersistence(filepath="bot_data.pickle")
         builder.persistence(persistence)
         
     application = builder.build()
@@ -145,17 +124,16 @@ def get_application(use_persistence=True):
     application.add_handler(get_language_conversation_handler())
     application.add_handler(get_search_conversation_handler())
     application.add_handler(CallbackQueryHandler(handle_search_page_callback, pattern=r"^search_"))
-    application.add_handler(get_admin_conversation_handler())
-    application.add_handler(get_group_conversation_handler())
-    application.add_handler(get_contact_conversation_handler())
+    application.add_handler(get_login_conversation_handler())
+    application.add_handler(get_register_conversation_handler())
+    application.add_handler(get_forgot_password_conversation_handler())
     application.add_handler(get_help_conversation_handler())
-    application.add_handler(get_feedback_conversation_handler())
-    application.add_handler(get_broadcast_conversation_handler())
+    application.add_handler(get_profile_handler())
+    application.add_handler(CallbackQueryHandler(handle_profile_callback, pattern=r"^profile_"))
     application.add_handler(get_balance_handler())
-    application.add_handler(get_sms_conversation_handler())
     
-    # Admin reply handler for support group
-    application.add_handler(MessageHandler(filters.REPLY & filters.Chat(chat_id=SUPPORT_GROUP_ID), handle_admin_reply))
+    # Admin reply handler for owner
+    application.add_handler(MessageHandler(filters.REPLY & filters.Chat(chat_id=OWNER_ID), handle_admin_reply))
     
     return application
 

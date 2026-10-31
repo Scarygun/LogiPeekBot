@@ -1,7 +1,7 @@
 import logging
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler, ConversationHandler, MessageHandler, filters, CallbackQueryHandler
-from config import ADMINS
+from config import OWNER_ID
 from database import log_admin_action, get_all_feedback, get_user_count_from_json, get_group_count_from_json, get_contact_count_from_json, load_contacts_from_json, load_groups_from_json, load_users_from_json
 from language_handler import get_message
 from keyboards import get_main_menu_keyboard, get_back_keyboard
@@ -29,7 +29,7 @@ class AdminStates:
 
 # Admin ekanligini tekshirish
 def is_admin(user_id):
-    return user_id in ADMINS
+    return user_id == OWNER_ID
 
 # Admin panelni boshlash
 async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -255,6 +255,49 @@ async def add_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     logger.debug(f"Balans qo'shishdan so'ng MAIN_MENU ga qaytmoqda. Admin ID: {user_id}")
     return AdminStates.MAIN_MENU
+
+async def add_sub_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if not is_admin(user_id):
+        await update.message.reply_text("Siz admin emassiz.")
+        return
+        
+    try:
+        args = context.args
+        if len(args) != 2:
+            await update.message.reply_text("Format: /add_sub <user_id> <kunlar_soni>")
+            return
+            
+        target_id = args[0].strip()
+        days = int(args[1].strip())
+        
+        from database import add_subscription_days
+        new_end = await add_subscription_days(target_id, days)
+        
+        # Parse the new_end string and format nicely
+        end_date = datetime.fromisoformat(new_end)
+        formatted_date = end_date.strftime("%Y-%m-%d %H:%M:%S")
+        
+        await update.message.reply_text(
+            f"✅ <b>{target_id}</b> foydalanuvchisiga {days} kun qo'shildi!\n\n"
+            f"⏳ Yangi obuna tugash vaqti: <b>{formatted_date}</b>",
+            parse_mode="HTML"
+        )
+        
+        # Userga ham xabar yuborish
+        try:
+            await context.bot.send_message(
+                chat_id=target_id,
+                text=f"🎉 <b>Tabriklaymiz!</b>\n\nSizning obunangiz uzaytirildi. Sizda {days} kunlik ruxsat bor.\nObuna muddati: {formatted_date}",
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            logger.warning(f"Foydalanuvchiga obuna qo'shilgani haqida xabar yuborib bo'lmadi: {e}")
+            
+    except ValueError:
+        await update.message.reply_text("Noto'g'ri raqam formati.")
+    except Exception as e:
+        await update.message.reply_text(f"Xatolik: {e}")
 
 # Admin conversation handler yaratish
 async def show_admin_groups(update: Update, context: ContextTypes.DEFAULT_TYPE, page: int = 0):

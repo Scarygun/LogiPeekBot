@@ -3,10 +3,16 @@ from telegram import ReplyKeyboardMarkup
 
 def get_main_menu_keyboard(user_data, get_message_func):
     keyboard = [
-        [get_message_func(user_data, "search_load"), get_message_func(user_data, "help_button")],
-        [get_message_func(user_data, "add_group"), get_message_func(user_data, "add_contact")],
-        [get_message_func(user_data, "check_balance"), get_message_func(user_data, "send_feedback")],
-        [get_message_func(user_data, "select_language_button")]
+        [get_message_func(user_data, "search_load"), get_message_func(user_data, "check_balance")],
+        [get_message_func(user_data, "profile_button"), get_message_func(user_data, "select_language_button")],
+        [get_message_func(user_data, "help_button")]
+    ]
+    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+
+def get_auth_keyboard(user_data, get_message_func):
+    keyboard = [
+        [get_message_func(user_data, "login_button"), get_message_func(user_data, "register_button")],
+        [get_message_func(user_data, "forgot_password_button")]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
 
@@ -14,8 +20,8 @@ def get_all_menu_buttons(get_message_func):
     """Barcha tillardagi asosiy menyu tugmalari ro'yxatini qaytaradi"""
     from language_handler import MESSAGES
     buttons = []
-    keys = ["search_load", "add_group", "add_contact", "check_balance", "send_feedback",
-            "select_language_button", "help_button", "sms_button"]
+    keys = ["search_load", "check_balance", "select_language_button", 
+            "help_button", "login_button", "register_button", "forgot_password_button", "profile_button"]
     for lang in MESSAGES:
         for key in keys:
             if key in MESSAGES[lang]:

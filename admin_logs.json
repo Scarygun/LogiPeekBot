@@ -1,0 +1,121 @@
+[
+    {
+        "admin_id": 7377275622,
+        "action": "open_admin_panel",
+        "target_type": "system",
+        "target_id": "none",
+        "timestamp": "2026-08-13T22:28:50.351341"
+    },
+    {
+        "admin_id": 7377275622,
+        "action": "view_users_count",
+        "target_type": "system",
+        "target_id": "none",
+        "timestamp": "2026-08-13T22:28:51.977574"
+    },
+    {
+        "admin_id": 7377275622,
+        "action": "open_admin_panel",
+        "target_type": "system",
+        "target_id": "none",
+        "timestamp": "2026-08-13T22:37:01.404952"
+    },
+    {
+        "admin_id": 7377275622,
+        "action": "view_users_count",
+        "target_type": "system",
+        "target_id": "none",
+        "timestamp": "2026-08-13T22:37:03.742583"
+    },
+    {
+        "admin_id": 7377275622,
+        "action": "open_admin_panel",
+        "target_type": "system",
+        "target_id": "none",
+        "timestamp": "2026-08-13T22:41:21.010166"
+    },
+    {
+        "admin_id": 7377275622,
+        "action": "view_users_count",
+        "target_type": "system",
+        "target_id": "none",
+        "timestamp": "2026-08-13T22:41:23.131806"
+    },
+    {
+        "admin_id": 7377275622,
+        "action": "open_admin_panel",
+        "target_type": "system",
+        "target_id": "none",
+        "timestamp": "2026-08-13T22:44:01.130195"
+    },
+    {
+        "admin_id": 7377275622,
+        "action": "view_users_count",
+        "target_type": "system",
+        "target_id": "none",
+        "timestamp": "2026-08-13T22:44:02.586658"
+    },
+    {
+        "admin_id": 7377275622,
+        "action": "view_groups",
+        "target_type": "system",
+        "target_id": "none",
+        "timestamp": "2026-08-13T22:52:34.501475"
+    },
+    {
+        "admin_id": 7377275622,
+        "action": "view_users_count",
+        "target_type": "system",
+        "target_id": "none",
+        "timestamp": "2026-08-13T22:52:54.998525"
+    },
+    {
+        "admin_id": 7377275622,
+        "action": "close_admin_panel",
+        "target_type": "system",
+        "target_id": "none",
+        "timestamp": "2026-08-13T22:54:14.399686"
+    },
+    {
+        "admin_id": 7377275622,
+        "action": "open_admin_panel",
+        "target_type": "system",
+        "target_id": "none",
+        "timestamp": "2026-08-14T19:39:21.094010"
+    },
+    {
+        "admin_id": 7377275622,
+        "action": "view_users_count",
+        "target_type": "system",
+        "target_id": "none",
+        "timestamp": "2026-08-14T19:39:22.722213"
+    },
+    {
+        "admin_id": 7377275622,
+        "action": "open_admin_panel",
+        "target_type": "system",
+        "target_id": "none",
+        "timestamp": "2026-08-14T22:16:34.796192"
+    },
+    {
+        "admin_id": 7377275622,
+        "action": "open_admin_panel",
+        "target_type": "system",
+        "target_id": "none",
+        "timestamp": "2026-09-27T23:24:46.636078"
+    },
+    {
+        "admin_id": 7377275622,
+        "action": "view_users_count",
+        "target_type": "system",
+        "target_id": "none",
+        "timestamp": "2026-09-27T23:24:48.815841"
+    },
+    {
+        "admin_id": 7377275622,
+        "action": "open_admin_panel",
+        "target_type": "system",
+        "target_id": "none",
+        "timestamp": "2026-10-02T11:13:46.306769"
+    }
+]

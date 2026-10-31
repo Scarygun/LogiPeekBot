@@ -6,7 +6,7 @@ from telegram.ext import ContextTypes, MessageHandler, filters, CommandHandler
 from telegram.ext import ConversationHandler
 from telegram.error import NetworkError
 from states import SearchStates
-from telethon_client import telethon_client
+from backend_client import backend_client
 from language_handler import get_message
 from keyboards import get_main_menu_keyboard, get_back_keyboard
 
@@ -17,19 +17,8 @@ import html
 
 # Yuk qidirishni boshlash
 async def start_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if telethon_client and not telethon_client.is_connected():
-        try:
-            await telethon_client.connect(send_code=False)
-        except Exception as e:
-            logger.error(f"Telethon clientni qidiruv oldidan ulashda xatolik: {e}")
 
-    if not telethon_client or not telethon_client.is_connected():
-        await update.message.reply_text(
-            get_message(context.user_data, "search_error_telethon_not_connected"),
-            parse_mode="HTML"
-        )
-        return ConversationHandler.END
-    
+
     reply_markup = get_back_keyboard(context.user_data, get_message)
     await update.message.reply_text(
         get_message(context.user_data, "search_from_city_prompt"), 
@@ -147,13 +136,21 @@ async def process_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="HTML"
     )
     
-    # Progress callback funksiyasini yaratamiz
-    async def progress_cb(current_count, total_count, current_results):
-        await progress_callback(current_count, total_count, current_results, update, context, loading_msg)
-    
     try:
-        # Telethon orqali qidiruvni amalga oshirish
-        results = await telethon_client.search_messages(from_city, to_city, progress_callback=progress_cb)
+        # Backend API orqali qidiruvni amalga oshirish
+        user_id = str(update.effective_user.id)
+        results = await backend_client.search_loads(from_city, to_city, user_id)
+        
+        if results == "NOT_LOGGED_IN":
+            # Xabarni o'chirish
+            await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=loading_msg.message_id)
+            reply_markup = get_main_menu_keyboard(context.user_data, get_message)
+            await update.message.reply_text(
+                "❌ <b>Siz tizimga kirmagansiz!</b>\n\nIltimos, avval <b>🔑 Tizimga kirish</b> tugmasi orqali Vigo.uz hisobingizga kiring.",
+                parse_mode="HTML",
+                reply_markup=reply_markup
+            )
+            return ConversationHandler.END
         
         # Progress xabarini o'chirish
         progress_message_id = context.user_data.get('progress_message_id')
@@ -279,7 +276,7 @@ async def show_search_results(update: Update, context: ContextTypes.DEFAULT_TYPE
                                 text=html.escape(snippet))
         message_text += item_text + "\n\n"
 
-    message_text += "<b><a href=\"https://t.me/logi_peek_bot\">🗺 Barcha yuklar xaritada</a></b>"
+    message_text += "🔗 <b><a href=\"https://play.google.com/store/apps/details?id=com.vigo.uz\">📱 Mobil ilovani yuklab olish</a></b>"
 
     # 3. Tugmalarni yaratish
     keyboard = []
@@ -416,15 +413,17 @@ async def handle_search_page_callback(update: Update, context: ContextTypes.DEFA
                 detail_message = header
                 detail_message += f"💬 {html.escape(full_text)}\n\n"
                 if result.get('link') and result.get('link') != '#':
-                    detail_message += f"🔗 <a href=\"{result['link']}\">Xabarni ko'rish</a>"
+                    detail_message += f"🔗 <a href=\"{result['link']}\">Xabarni ko'rish</a>\n\n"
+                
+                detail_message += "🔗 <b><a href=\"https://play.google.com/store/apps/details?id=com.vigo.uz\">📱 Mobil ilovani yuklab olish</a></b>"
                 
                 # Orqaga qaytish tugmasi
                 back_button_text = get_message(context.user_data, "back_to_list")
                 # Hozirgi sahifani aniqlash
                 current_page = context.user_data.get('search_page', 0)
-                reply_markup = InlineKeyboardMarkup([[
-                    InlineKeyboardButton(back_button_text, callback_data=f"search_page_{current_page}")
-                ]])
+                reply_markup = InlineKeyboardMarkup([
+                    [InlineKeyboardButton(back_button_text, callback_data=f"search_page_{current_page}")]
+                ])
                 
                 await query.message.edit_text(
                     detail_message,
