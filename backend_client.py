@@ -270,10 +270,27 @@ class BackendClient:
                                 link = "#"
                                 
                             results.append({
+                                'id': load.get('id'),
                                 'group_title': title,
+                                'title': title,
+                                'origin': load.get('origin', ''),
+                                'destination': load.get('destination', ''),
+                                'cargo_type': load.get('cargo_type', ''),
+                                'food_subtype': load.get('food_subtype', ''),
+                                'weight_kg': weight or load.get('weight'),
+                                'price': price,
+                                'currency': load.get('currency') or 'UZS',
+                                'price_negotiable': load.get('price_negotiable'),
+                                'pickup_date': pickup_date,
+                                'required_delivery_date': load.get('required_delivery_date'),
+                                'sender': sender_name,
+                                'owner_name': sender_name,
+                                'description': load.get('description', ''),
+                                'required_doc_types': load.get('required_doc_types') or [],
+                                'required_driver_document_types': load.get('required_driver_document_types') or [],
+                                'required_listing_document_types': load.get('required_listing_document_types') or [],
                                 'text': desc,
                                 'date': pickup_date,
-                                'sender': sender_name,
                                 'link': link
                             })
                         

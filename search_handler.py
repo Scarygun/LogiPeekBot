@@ -222,6 +222,86 @@ async def process_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     return ConversationHandler.END
 
+CARGO_TYPE_MAP = {
+    'food': "Oziq-ovqat",
+    'general': "Umumiy yuk",
+    'refrigerated': "Muzlatkich (Ref)",
+    'construction': "Qurilish mollari",
+    'dangerous': "Xavfli yuk (ADR)",
+    'liquid': "Suyuqlik",
+    'livestock': "Tirik hayvonlar",
+    'auto': "Avtomobil tashish",
+    'equipment': "Uskunalar / Texnika",
+}
+
+FOOD_SUBTYPE_MAP = {
+    'animal': "hayvonot mahsulotlari",
+    'plant': "meva-sabzavot / o'simlik",
+}
+
+DOC_TYPE_MAP = {
+    'passport': "Haydovchi pasporti",
+    'driver_license': "Haydovchilik guvohnomasi (Prava)",
+    'vehicle_registration': "Avtotransport tex-pasporti",
+    'vehicle_insurance': "Sug'urta polisi",
+    'vehicle_technical_inspection': "Texnik ko'rik (TOSMOTR)",
+    'ttn': "TTN (Tovar-transport yukxati)",
+    'invoice': "Hisob-faktura (Invoice)",
+    'veterinary_certificate': "Veterinariya sertifikati",
+    'phytosanitary_certificate': "Fitosanitariya sertifikati",
+    'cmr': "CMR xalqaro yuk xati",
+    'tir': "TIR Carnet"
+}
+
+def format_weight(weight_val):
+    if not weight_val:
+        return "Ko'rsatilmagan"
+    try:
+        w_f = float(weight_val)
+        return f"{int(w_f):,} kg".replace(",", " ") if w_f.is_integer() else f"{w_f:,.1f} kg".replace(",", " ")
+    except Exception:
+        return f"{weight_val} kg"
+
+def format_price(price_val, currency="UZS", negotiable=False):
+    if not price_val:
+        return "Kelishiladi" if negotiable else "Ko'rsatilmagan"
+    try:
+        p_f = float(price_val)
+        curr = currency or "UZS"
+        return f"{int(p_f):,} {curr}".replace(",", " ") if p_f.is_integer() else f"{p_f:,.2f} {curr}".replace(",", " ")
+    except Exception:
+        return f"{price_val} {currency or ''}"
+
+def format_cargo_type(cargo_type, subtype=None):
+    if not cargo_type:
+        return "Umumiy yuk"
+    base = CARGO_TYPE_MAP.get(str(cargo_type).lower(), str(cargo_type))
+    if subtype and str(subtype).lower() in FOOD_SUBTYPE_MAP:
+        base += f" ({FOOD_SUBTYPE_MAP[str(subtype).lower()]})"
+    elif subtype and str(subtype).lower() not in ('none', 'null', ''):
+        base += f" ({subtype})"
+    return base
+
+def format_docs_list(listing_docs, driver_docs, general_docs):
+    lines = []
+    
+    cargo_doc_keys = [d for d in (listing_docs or []) if d]
+    if cargo_doc_keys:
+        names = [DOC_TYPE_MAP.get(k, k) for k in cargo_doc_keys]
+        lines.append(f"• <b>Tovarga:</b> {', '.join(names)}")
+        
+    drv_keys = [d for d in (driver_docs or []) if d]
+    if drv_keys:
+        names = [DOC_TYPE_MAP.get(k, k) for k in drv_keys]
+        lines.append(f"• <b>Haydovchiga:</b> {', '.join(names)}")
+        
+    if not lines and general_docs:
+        names = [DOC_TYPE_MAP.get(k, k) for k in general_docs if k]
+        if names:
+            lines.append(f"• {', '.join(names)}")
+            
+    return "\n".join(lines) if lines else "Standart hujjatlar"
+
 # Natijalarni ko'rsatish funksiyasi
 async def show_search_results(update: Update, context: ContextTypes.DEFAULT_TYPE, page: int = 0):
     """Natijalarni sahifalab ko'rsatish - ro'yxat ko'rinishida"""
@@ -259,25 +339,20 @@ async def show_search_results(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     message_text = header + "\n\n"
     
-    # 2. Ro'yxatni shakllantirish
+    # 2. Ro'yxatni shakllantirish (Yuk nomi, vazni va narxi)
     for i, result in enumerate(page_results):
         actual_idx = start_idx + i + 1
-        # Qisqacha nom (guruh nomi yoki birinchi qator)
-        group_title = result.get('group_title', 'Noma\'lum')
-        # Agar group_title juda uzun bo'lsa qisqartirish
-        if len(group_title) > 20:
-             group_title = group_title[:20] + "..."
+        item_title = result.get('title') or result.get('group_title', 'Yuk')
+        if len(item_title) > 35:
+            item_title = item_title[:35] + "..."
+            
+        weight_str = format_weight(result.get('weight_kg'))
+        price_str = format_price(result.get('price'), result.get('currency'), result.get('price_negotiable'))
              
-        full_text = result.get('text', '')
-        # Matnni qisqartirish (masalan 100 belgi)
-        snippet = full_text[:100].replace('\n', ' ')
-        if len(full_text) > 100:
-            snippet += "..."
-             
-        item_text = get_message(context.user_data, "search_result_item_list", 
-                idx=actual_idx, 
-                                title=html.escape(group_title),
-                                text=html.escape(snippet))
+        item_text = (
+            f"<b>{actual_idx}.) 📦 {html.escape(item_title)}</b>\n"
+            f"⚖️ Vazni: <b>{html.escape(weight_str)}</b>  |  💰 Narxi: <b>{html.escape(price_str)}</b>"
+        )
         message_text += item_text + "\n\n"
 
     message_text += "🔗 <b><a href=\"https://play.google.com/store/apps/details?id=com.vigo.uz\">📱 Mobil ilovani yuklab olish</a></b>"
@@ -405,19 +480,44 @@ async def handle_search_page_callback(update: Update, context: ContextTypes.DEFA
             
             if 0 <= result_idx < len(results):
                 result = results[result_idx]
-                full_text = result['text']
                 
-                # To'liq natijani ko'rsatish
-                header = get_message(context.user_data, "search_details_header",
-                                    idx=result_idx + 1,
-                                    title=html.escape(result.get('group_title', 'Noma\'lum')),
-                                    date=html.escape(str(result.get('date', ''))),
-                                    sender=html.escape(result.get('sender', '')))
+                title = result.get('title') or result.get('group_title', 'Yuk')
+                origin = result.get('origin') or context.user_data.get('search_from_city', '')
+                destination = result.get('destination') or context.user_data.get('search_to_city', '')
                 
-                detail_message = header
-                detail_message += f"💬 {html.escape(full_text)}\n\n"
+                weight_str = format_weight(result.get('weight_kg'))
+                price_str = format_price(result.get('price'), result.get('currency'), result.get('price_negotiable'))
+                cargo_type_display = format_cargo_type(result.get('cargo_type'), result.get('food_subtype'))
+                
+                pickup_date = str(result.get('pickup_date') or result.get('date', ''))
+                delivery_date = str(result.get('required_delivery_date') or '')
+                sender = result.get('owner_name') or result.get('sender', 'Vigo Tizimi')
+                
+                docs_text = format_docs_list(
+                    result.get('required_listing_document_types'),
+                    result.get('required_driver_document_types'),
+                    result.get('required_doc_types')
+                )
+                
+                detail_message = f"<b>#{result_idx + 1} {html.escape(title)}</b>\n\n"
+                if origin and destination:
+                    detail_message += f"📍 <b>Marshrut:</b> {html.escape(origin)} ➡️ {html.escape(destination)}\n"
+                detail_message += f"📦 <b>Yuk turi:</b> {html.escape(cargo_type_display)}\n"
+                detail_message += f"⚖️ <b>Vazni:</b> {html.escape(weight_str)}\n"
+                detail_message += f"💰 <b>Narxi:</b> {html.escape(price_str)}\n"
+                detail_message += f"📅 <b>Yuklash sanasi:</b> {html.escape(pickup_date)}\n"
+                if delivery_date:
+                    detail_message += f"🏁 <b>Yetkazish muddati:</b> {html.escape(delivery_date)}\n"
+                detail_message += f"👤 <b>Yuk egasi:</b> {html.escape(sender)}\n\n"
+                
+                detail_message += f"📑 <b>Talab qilingan hujjatlar:</b>\n{docs_text}\n\n"
+                
+                desc = result.get('description', '')
+                if desc and desc.strip():
+                    detail_message += f"💬 <b>Tavsif:</b> {html.escape(desc.strip())}\n\n"
+                
                 if result.get('link') and result.get('link') != '#':
-                    detail_message += f"🔗 <a href=\"{result['link']}\">Xabarni ko'rish</a>\n\n"
+                    detail_message += f"🔗 <a href=\"{result['link']}\">Vigo tizimida ko'rish</a>\n\n"
                 
                 detail_message += "🔗 <b><a href=\"https://play.google.com/store/apps/details?id=com.vigo.uz\">📱 Mobil ilovani yuklab olish</a></b>"
                 
