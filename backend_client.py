@@ -4,10 +4,101 @@ import aiohttp
 import logging
 from datetime import datetime, timedelta
 
+import difflib
+import re
+
 logger = logging.getLogger(__name__)
 
 from database import _read_json
 from config import USERS_JSON_FILE
+
+# O'zbekiston viloyatlari, asosiy shaharlari va tumanlari sinonim / variantlari
+LOCATION_ALIASES = {
+    'toshkent': {'toshkent', 'tashkent', 'tosh', 'tash'},
+    'samarqand': {'samarqand', 'samarkand', 'samarkant'},
+    'buxoro': {'buxoro', 'buxara', 'bukhara', 'buhoro'},
+    'andijon': {'andijon', 'andijan'},
+    'namangan': {'namangan'},
+    'fargona': {'fargona', "farg'ona", "farg‘ona", 'fergana', 'fergona'},
+    'qashqadaryo': {'qashqadaryo', 'kashkadarya', 'qarshi', 'karshi', 'koson', 'kason', 'kasan', 'shahrisabz', 'shaxrisabz'},
+    'surxondaryo': {'surxondaryo', 'surxandarya', 'termiz', 'termez'},
+    'xorazm': {'xorazm', 'khorezm', 'horazm', 'urganch', 'urgench', 'xiva'},
+    'navoiy': {'navoiy', 'navoi'},
+    'jizzax': {'jizzax', 'djizak', 'jizak'},
+    'sirdaryo': {'sirdaryo', 'sirdarya', 'guliston', 'gulistan'},
+    'qoraqalpogiston': {'qoraqalpogiston', 'karakalpakstan', 'nukus', 'nókis', 'nokis'},
+    'koson': {'koson', 'kason', 'kasan', 'kassan'},
+    'nukus': {'nukus', 'nókis', 'nokis'},
+    'qarshi': {'qarshi', 'karshi'},
+}
+
+STOPWORDS = {
+    'tumani', 'tuman', 'viloyati', 'viloyat', 'shahri', 'shahar', 
+    'vil', 'sh', 't', 'rayon', 'oblast', 'gorod', 'oʻzbekiston', 
+    'ozbekiston', 'uzbekistan', 'respublikasi', 'resp'
+}
+
+def clean_and_tokenize(text: str):
+    """Joy nomidan ortiqcha so'zlarni olib tashlab, asosiy kalit so'zlarni ajratish"""
+    if not text:
+        return []
+    cleaned = re.sub(r'[^a-zA-Z0-9\u0400-\u04FF\u02BB\u02BC\'`\u00F3\u00D3]', ' ', text.lower())
+    words = cleaned.split()
+    tokens = [w for w in words if w not in STOPWORDS and len(w) > 1]
+    return tokens
+
+def phonetic_key(word: str) -> str:
+    """Imloviy xatolarni qoplash uchun fonetik kalit yaratish"""
+    w = word.lower()
+    w = w.replace('ó', 'o').replace('oʻ', 'o').replace("o'", 'o').replace('o`', 'o')
+    w = w.replace('gʻ', 'g').replace("g'", 'g').replace('g`', 'g')
+    w = w.replace('kh', 'x').replace('h', 'x')
+    w = w.replace('q', 'k')
+    w = w.replace('c', 's')
+    w = w.replace('dj', 'j')
+    w = re.sub(r'[aou]', '*', w)
+    w = re.sub(r'[ei]', '#', w)
+    w = re.sub(r'(.)\1+', r'\1', w)
+    return w
+
+def is_word_match(w1: str, w2: str) -> bool:
+    """Ikki so'z o'rtasidagi to'g'ri, qisman yoki noaniq (fuzzy) moslikni aniqlash"""
+    w1_l = w1.lower()
+    w2_l = w2.lower()
+    if w1_l == w2_l:
+        return True
+    if w1_l in w2_l or w2_l in w1_l:
+        return True
+        
+    for key, group in LOCATION_ALIASES.items():
+        if (w1_l in group or key == w1_l) and (w2_l in group or key == w2_l):
+            return True
+
+    if phonetic_key(w1) == phonetic_key(w2):
+        return True
+
+    if len(w1) >= 4 and len(w2) >= 4:
+        sim = difflib.SequenceMatcher(None, w1_l, w2_l).ratio()
+        if sim >= 0.70:
+            return True
+            
+    return False
+
+def location_matches(query: str, target: str) -> bool:
+    """Foydalanuvchi qidiruvi bazadagi joy nomiga mos kelishini tekshirish"""
+    q_tokens = clean_and_tokenize(query)
+    t_tokens = clean_and_tokenize(target)
+    
+    if not q_tokens:
+        return True
+    if not t_tokens:
+        return False
+        
+    for qw in q_tokens:
+        for tw in t_tokens:
+            if is_word_match(qw, tw):
+                return True
+    return False
 
 class BackendClient:
     def __init__(self):
@@ -88,7 +179,7 @@ class BackendClient:
             return user_data.get("token")
 
     async def search_loads(self, from_city: str, to_city: str, user_id: str):
-        """Backend dan yuklarni izlash"""
+        """Backend dan yuklarni izlash (imloviy xatolar va tuman/viloyat so'zlariga chidamli qidiruv)"""
         token = await self._get_valid_token(user_id)
         if not token:
             logger.error(f"Token yo'qligi sababli yuk izlab bo'lmadi (User: {user_id}).")
@@ -96,9 +187,15 @@ class BackendClient:
 
         search_url = f"{self.base_url}/api/v1/cargo/marketplace/listings/"
         
+        orig_tokens = clean_and_tokenize(from_city)
+        dest_tokens = clean_and_tokenize(to_city)
+        
+        primary_orig = orig_tokens[0] if orig_tokens else from_city.strip()
+        primary_dest = dest_tokens[0] if dest_tokens else to_city.strip()
+
         params = {
-            "origin": from_city,
-            "destination": to_city
+            "origin": primary_orig,
+            "destination": primary_dest
         }
         headers = {
             "Authorization": f"Bearer {token}",
@@ -110,12 +207,22 @@ class BackendClient:
                 async with session.get(search_url, params=params, headers=headers) as response:
                     if response.status == 200:
                         data = await response.json()
-                        # Backenddan kelgan ma'lumotni bot formatiga o'tkazish
-                        # Bu qism backend qanday JSON qaytarishiga qarab o'zgartirilishi kerak!
-                        
-                        results = []
                         loads = data if isinstance(data, list) else data.get('results', [])
                         
+                        # Agar to'g'ridan-to'g'ri qidiruvda natija topilmasa (imloviy xato, o'zgargan nomlar),
+                        # umumiy ro'yxatdan fuzzy va fonetik algoritm orqali qidiramiz
+                        if not loads:
+                            logger.info(f"Aniq qidiruv natija bermadi ({from_city} -> {to_city}). Noaniq (fuzzy) qidiruv ishga tushirilmoqda...")
+                            async with session.get(search_url, headers=headers) as all_resp:
+                                if all_resp.status == 200:
+                                    all_data = await all_resp.json()
+                                    all_loads = all_data if isinstance(all_data, list) else all_data.get('results', [])
+                                    loads = [
+                                        l for l in all_loads
+                                        if location_matches(from_city, l.get('origin', '')) and location_matches(to_city, l.get('destination', ''))
+                                    ]
+                        
+                        results = []
                         for load in loads:
                             title = load.get('title')
                             if not title:
