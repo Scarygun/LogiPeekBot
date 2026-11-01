@@ -38,6 +38,11 @@ STOPWORDS = {
     'ozbekiston', 'uzbekistan', 'respublikasi', 'resp'
 }
 
+WILDCARD_TERMS = {
+    'barchasi', 'barcha', 'farqiyoq', 'farqi yoq', "farqi yo'q", "farqi yo‘q",
+    'ixtiyoriy', 'hamma', 'hammasi', 'all', 'har qanday', '-', '*', 'lyuboy', 'lyubaya', 'har joyga'
+}
+
 def clean_and_tokenize(text: str):
     """Joy nomidan ortiqcha so'zlarni olib tashlab, asosiy kalit so'zlarni ajratish"""
     if not text:
@@ -86,6 +91,12 @@ def is_word_match(w1: str, w2: str) -> bool:
 
 def location_matches(query: str, target: str) -> bool:
     """Foydalanuvchi qidiruvi bazadagi joy nomiga mos kelishini tekshirish"""
+    if not query:
+        return True
+    q_clean = query.strip().lower()
+    if q_clean in WILDCARD_TERMS:
+        return True
+
     q_tokens = clean_and_tokenize(query)
     t_tokens = clean_and_tokenize(target)
     
@@ -187,16 +198,20 @@ class BackendClient:
 
         search_url = f"{self.base_url}/api/v1/cargo/marketplace/listings/"
         
+        orig_clean = from_city.strip().lower()
+        dest_clean = to_city.strip().lower()
+        
+        is_orig_wildcard = orig_clean in WILDCARD_TERMS
+        is_dest_wildcard = dest_clean in WILDCARD_TERMS
+        
         orig_tokens = clean_and_tokenize(from_city)
         dest_tokens = clean_and_tokenize(to_city)
         
-        primary_orig = orig_tokens[0] if orig_tokens else from_city.strip()
-        primary_dest = dest_tokens[0] if dest_tokens else to_city.strip()
-
-        params = {
-            "origin": primary_orig,
-            "destination": primary_dest
-        }
+        params = {}
+        if not is_orig_wildcard and orig_tokens:
+            params["origin"] = orig_tokens[0]
+        if not is_dest_wildcard and dest_tokens:
+            params["destination"] = dest_tokens[0]
         headers = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json"

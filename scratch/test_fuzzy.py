@@ -107,3 +107,4 @@ for q_from, q_to in queries:
         if location_matches(q_from, item['origin']) and location_matches(q_to, item['dest']):
             matched.append(f"{item['origin']} -> {item['dest']}")
     print(f"Q: ({q_from} -> {q_to}) => Matches: {len(matched)}: {matched}")
+
