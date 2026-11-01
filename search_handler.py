@@ -189,9 +189,11 @@ async def process_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 reply_markup=reply_markup
             )
         else:
+            reply_markup = get_main_menu_keyboard(context.user_data, get_message)
             await update.message.reply_text(
                 get_message(context.user_data, "search_no_results", from_city=from_city, to_city=to_city),
-                parse_mode="HTML"
+                parse_mode="HTML",
+                reply_markup=reply_markup
             )
     
     except Exception as e:
@@ -206,8 +208,10 @@ async def process_to(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
             except:
                 pass
+        reply_markup = get_main_menu_keyboard(context.user_data, get_message)
         await update.message.reply_text(
-            get_message(context.user_data, "search_error_unexpected")
+            get_message(context.user_data, "search_error_unexpected"),
+            reply_markup=reply_markup
         )
     finally:
         # Tozalash

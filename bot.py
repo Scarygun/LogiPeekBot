@@ -66,6 +66,29 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
     await update.message.reply_text(welcome_message, reply_markup=reply_markup)
 
+async def back_to_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    users = _read_json(USERS_JSON_FILE, [])
+    is_logged_in = False
+    if isinstance(users, list):
+        for u in users:
+            if str(u.get("user_id")) == str(user.id) and u.get("vigo_phone"):
+                is_logged_in = True
+                break
+    elif isinstance(users, dict):
+        if str(user.id) in users and users[str(user.id)].get("vigo_phone"):
+            is_logged_in = True
+
+    if is_logged_in:
+        reply_markup = get_main_menu_keyboard(context.user_data, get_message)
+    else:
+        reply_markup = get_auth_keyboard(context.user_data, get_message)
+        
+    await update.message.reply_text(
+        get_message(context.user_data, "main_menu"),
+        reply_markup=reply_markup
+    )
+
 def _track_background_task(task, description: str):
     _background_tasks.add(task)
 
@@ -131,6 +154,11 @@ def get_application(use_persistence=True):
     application.add_handler(get_profile_handler())
     application.add_handler(CallbackQueryHandler(handle_profile_callback, pattern=r"^profile_"))
     application.add_handler(get_balance_handler())
+    
+    # Umumiy Orqaga tugmasi (konversatsiyadan tashqarida bosilganda bosh menyuga qaytaradi)
+    from language_handler import MESSAGES
+    back_buttons = [MESSAGES[l]["back_button"].strip() for l in MESSAGES if "back_button" in MESSAGES[l]]
+    application.add_handler(MessageHandler(filters.Text(back_buttons), back_to_main_menu))
     
     # Admin reply handler for owner
     application.add_handler(MessageHandler(filters.REPLY & filters.Chat(chat_id=OWNER_ID), handle_admin_reply))
